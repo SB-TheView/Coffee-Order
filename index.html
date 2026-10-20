@@ -8,69 +8,64 @@
         body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; user-select: none; }
         .container { max-width: 480px; margin: 0 auto; background: #ffffff; padding: 20px 20px 90px 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; }
         
-        /* 언어 선택 스위치 */
         .lang-switch { position: absolute; top: 15px; right: 15px; display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; font-size: 12px; font-weight: bold; }
         .lang-btn { border: none; background: transparent; padding: 4px 8px; border-radius: 4px; cursor: pointer; color: #666; font-size: 12px; font-weight: bold; }
         .lang-btn.active { background: #007bff; color: white; }
 
-        /* 헤더 */
         .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; margin-top: 10px; }
         .brand-main { font-size: 26px; font-weight: 800; color: #1a1a1a; letter-spacing: 4px; line-height: 1.2; text-transform: uppercase; }
         .brand-sub { font-size: 18px; font-weight: 600; color: #555; letter-spacing: 3px; margin-top: 6px; }
         .table-badge { display: inline-block; background: #007bff; color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; margin-top: 14px; }
 
-        /* 카테고리 탭 */
         .category-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
         .tab-btn { background: #e9ecef; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #555; cursor: pointer; }
         .tab-btn.active { background: #343a40; color: white; }
 
-        /* 소제목 (디카페인/카페인 구분 등) */
         .section-title { font-size: 14px; font-weight: bold; color: #888; margin: 20px 0 10px 5px; border-left: 3px solid #007bff; padding-left: 8px; }
 
         .menu-group { display: none; }
         .menu-group.active { display: block; }
 
-        /* 메뉴 카드 (클릭 시 옵션 선택창 팝업) */
         .menu-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.1s; }
         .menu-card:active { background: #f1f3f5; }
         .menu-name { font-size: 16px; font-weight: bold; color: #333; }
         .menu-action { font-size: 13px; color: #007bff; font-weight: bold; background: #e7f1ff; padding: 6px 12px; border-radius: 6px; }
 
-        /* 하단 고정 주문 버튼 바 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #ddd; padding: 12px 20px; display: flex; justify-content: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 10; }
         .btn-submit-all { max-width: 480px; width: 100%; background-color: #28a745; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; }
         .btn-submit-all:hover { background-color: #218838; }
 
-        /* 모달 공통 스타일 */
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
-        .modal-content { background: #fff; width: 90%; max-width: 360px; padding: 24px; border-radius: 14px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #222; }
+        .modal-content { background: #fff; width: 90%; max-width: 360px; padding: 24px; border-radius: 14px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #222; }
+        
+        .modal-subtitle { font-size: 13px; font-weight: bold; color: #666; text-align: left; margin: 12px 0 6px 2px; }
 
-        /* HOT / ICED 선택 버튼 */
-        .option-buttons { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
-        .opt-btn { flex: 1; padding: 14px 0; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; border: 2px solid; }
-        .opt-hot { background: #fff5f5; border-color: #ff6b6b; color: #ff6b6b; }
-        .opt-hot:hover { background: #ff6b6b; color: #fff; }
-        .opt-iced { background: #e7f5ff; border-color: #339af0; color: #339af0; }
-        .opt-iced:hover { background: #339af0; color: #fff; }
+        .option-buttons { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
+        .opt-btn { flex: 1; padding: 12px 0; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; border: 2px solid #ddd; background: #f8f9fa; color: #555; }
+        .opt-btn.active { background: #343a40; border-color: #343a40; color: #fff; }
 
-        /* 수량 조절 및 담기 버튼 */
-        .qty-box { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; }
+        .qty-box { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; }
         .btn-q { width: 36px; height: 36px; background: #eee; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
         .q-val { font-size: 18px; font-weight: bold; width: 30px; }
         .btn-add { width: 100%; background: #007bff; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
         .btn-close { background: transparent; border: none; color: #888; margin-top: 10px; cursor: pointer; font-size: 14px; }
 
-        /* 장바구니 리스트 영역 */
         .cart-section { margin-top: 30px; border-top: 2px dashed #ddd; padding-top: 15px; }
         .cart-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: #444; text-align: left; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; text-align: left; }
         
-        /* HOT/ICED 원형 뱃지 스타일 */
-        .badge-hot { display: inline-block; border: 2px solid #ff4757; color: #ff4757; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-left: 4px; }
-        .badge-iced { display: inline-block; border: 2px solid #1e90ff; color: #1e90ff; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-left: 4px; }
+        .badge-hot { display: inline-block; border: 2px solid #ff4757; color: #ff4757; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; margin-left: 3px; }
+        .badge-iced { display: inline-block; border: 2px solid #1e90ff; color: #1e90ff; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; margin-left: 3px; }
+        .badge-decaf { display: inline-block; background: #2ed573; color: #000; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; margin-left: 3px; }
+        .badge-cinnamon { display: inline-block; background: #795548; color: #fff; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; margin-left: 3px; }
 
         .btn-del { background: #ff4757; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
+        .memo-section { margin-top: 20px; text-align: left; }
+        .memo-label { font-size: 13px; font-weight: bold; color: #555; margin-bottom: 6px; display: block; }
+        .memo-input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; box-sizing: border-box; resize: none; font-family: 'Noto Sans KR', sans-serif; }
+
         .loading { display: none; text-align: center; color: #007bff; margin-top: 15px; font-weight: bold; font-size: 14px; }
     </style>
 </head>
@@ -84,7 +79,7 @@
 
         <div class="header">
             <div class="brand-main">THE VIEW</div>
-            <div class="brand-sub"> Coffee & Tea </div>
+            <div class="brand-sub">Coffee & Tea</div>
             <div id="table-display" class="table-badge">테이블 확인 중...</div>
         </div>
 
@@ -93,78 +88,83 @@
             <button id="tab-tea" class="tab-btn" onclick="switchCategory('tea')">차 (Tea)</button>
         </div>
 
-        <!-- 1. 커피 메뉴 그룹 -->
+        <!-- 커피 메뉴 그룹 -->
         <div id="group-coffee" class="menu-group active">
-            <div class="menu-card" onclick="openOptionModal('에스프레소', ['HOT'])">
+            <div class="menu-card" onclick="openOptionModal('에스프레소', ['HOT'], false, true)">
                 <span class="menu-name" data-kor="에스프레소" data-eng="Espresso">에스프레소</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('더블 에스프레소 (도피오)', ['HOT'])">
+            <div class="menu-card" onclick="openOptionModal('더블 에스프레소 (도피오)', ['HOT'], false, true)">
                 <span class="menu-name" data-kor="더블 에스프레소 (도피오)" data-eng="Double Espresso (Doppio)">더블 에스프레소 (도피오)</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('아메리카노', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('아메리카노', ['HOT', 'ICED'], false, true)">
                 <span class="menu-name" data-kor="아메리카노" data-eng="Americano">아메리카노</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('카페라떼', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('카페라떼', ['HOT', 'ICED'], false, true)">
                 <span class="menu-name" data-kor="카페라떼" data-eng="Cafe Latte">카페라떼</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('바닐라라떼', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('바닐라라떼', ['HOT', 'ICED'], false, true)">
                 <span class="menu-name" data-kor="바닐라라떼" data-eng="Vanilla Latte">바닐라라떼</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('카푸치노', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('카푸치노', ['HOT', 'ICED'], true, true)">
                 <span class="menu-name" data-kor="카푸치노" data-eng="Cappuccino">카푸치노</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
         </div>
 
-        <!-- 2. 차(Tea) 메뉴 그룹 -->
+        <!-- 차(Tea) 메뉴 그룹 -->
         <div id="group-tea" class="menu-group">
-            <div class="section-title">- 디카페인 (Decaf) -</div>
-            <div class="menu-card" onclick="openOptionModal('카모마일', ['HOT', 'ICED'])">
+            <div class="section-title" id="title-decaf">- Decaffeinated Tea -</div>
+            <div class="menu-card" onclick="openOptionModal('카모마일', ['HOT', 'ICED'], false, false)">
                 <span class="menu-name" data-kor="카모마일" data-eng="Chamomile">카모마일</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('페퍼민트', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('페퍼민트', ['HOT', 'ICED'], false, false)">
                 <span class="menu-name" data-kor="페퍼민트" data-eng="Peppermint">페퍼민트</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('루이보스', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('루이보스', ['HOT', 'ICED'], false, false)">
                 <span class="menu-name" data-kor="루이보스" data-eng="Rooibos">루이보스</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('레드베리', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('레드베리', ['HOT', 'ICED'], false, false)">
                 <span class="menu-name" data-kor="레드베리" data-eng="Red Berry">레드베리</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
 
-            <div class="section-title">- 카페인 (Caffeine) -</div>
-            <div class="menu-card" onclick="openOptionModal('녹차', ['HOT', 'ICED'])">
+            <div class="section-title" id="title-caffeine">- Caffeine Tea -</div>
+            <div class="menu-card" onclick="openOptionModal('녹차', ['HOT', 'ICED'], false, false)">
                 <span class="menu-name" data-kor="녹차" data-eng="Green Tea">녹차</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('얼그레이', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('얼그레이', ['HOT', 'ICED'], false, false)">
                 <span class="menu-name" data-kor="얼그레이" data-eng="Earl Grey">얼그레이</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('잉글리쉬 블랙퍼스트', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('잉글리쉬 블랙퍼스트', ['HOT', 'ICED'], false, false)">
                 <span class="menu-name" data-kor="잉글리쉬 블랙퍼스트" data-eng="English Breakfast">잉글리쉬 블랙퍼스트</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
-            <div class="menu-card" onclick="openOptionModal('밀크 초콜릿', ['HOT', 'ICED'])">
+            <div class="menu-card" onclick="openOptionModal('밀크 초콜릿', ['HOT', 'ICED'], false, false)">
                 <span class="menu-name" data-kor="밀크 초콜릿" data-eng="Milk Chocolate">밀크 초콜릿</span>
                 <span class="menu-action" data-kor="선택하기" data-eng="Select">선택하기</span>
             </div>
         </div>
 
-        <!-- 담긴 장바구니 목록 영역 -->
+        <!-- 장바구니 영역 -->
         <div class="cart-section">
-            <div class="cart-title" id="cart-title-text"> 장바구니 내역</div>
+            <div class="cart-title" id="cart-title-text">장바구니 내역</div>
             <div id="cart-list">
                 <div style="color: #888; font-size: 13px; text-align: center; padding: 10px;" id="empty-cart-text">선택된 메뉴가 없습니다. 메뉴를 터치해 주세요.</div>
+            </div>
+
+            <div class="memo-section">
+                <label class="memo-label" id="memo-label-text">추가 요청사항 (선택사항)</label>
+                <textarea id="order-memo" class="memo-input" rows="2" placeholder="요청사항을 입력해 주세요 (예: 얼음은 따로 주세요)"></textarea>
             </div>
         </div>
 
@@ -175,10 +175,28 @@
     <div id="optionModal" class="modal">
         <div class="modal-content">
             <div class="modal-title" id="modal-menu-name">메뉴명</div>
-            <div class="option-buttons" id="modal-option-buttons">
-                <button class="opt-btn opt-hot" onclick="selectOption('HOT')">HOT</button>
-                <button class="opt-btn opt-iced" onclick="selectOption('ICED')">ICED</button>
+            
+            <!-- 커피 전용 원두 옵션 (일반 / 디카페인) -->
+            <div id="bean-section" style="display: none;">
+                <div class="modal-subtitle" id="label-bean">원두 선택</div>
+                <div class="option-buttons">
+                    <button id="bean-normal" class="opt-btn active" onclick="selectBean('REGULAR')">일반 (Regular)</button>
+                    <button id="bean-decaf" class="opt-btn" onclick="selectBean('DECAF')">디카페인 (Decaf)</button>
+                </div>
             </div>
+
+            <div class="modal-subtitle" id="label-temp">온도 선택</div>
+            <div class="option-buttons" id="modal-option-buttons"></div>
+
+            <!-- 카푸치노 전용 시나몬 옵션 -->
+            <div id="cinnamon-section" style="display: none;">
+                <div class="modal-subtitle" id="label-cinnamon">시나몬 가루</div>
+                <div class="option-buttons">
+                    <button id="cinnamon-yes" class="opt-btn active" onclick="selectCinnamon('O')">시나몬 O</button>
+                    <button id="cinnamon-no" class="opt-btn" onclick="selectCinnamon('X')">시나몬 X</button>
+                </div>
+            </div>
+
             <div class="qty-box">
                 <button class="btn-q" onclick="modalChangeQty(-1)">-</button>
                 <span class="q-val" id="modal-qty">1</span>
@@ -189,20 +207,22 @@
         </div>
     </div>
 
-    <!-- 하단 일괄 주문하기 버튼 -->
     <div class="bottom-bar">
         <button id="btn-submit-all" class="btn-submit-all" onclick="submitCartOrder()">주문하기</button>
     </div>
 
     <script>
-        // 🚀 요청하신 구글 앱스 스크립트 웹 앱 URL이 자동으로 적용되었습니다.
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzFII67V5lEWlEOMH9x9Ao8PnQUhk4Z9KZJ2x0PB-5GPa8XHKhTqDa8htVK2X-rhbrKVw/exec";
 
         let currentLang = 'kor';
-        let cart = []; // 장바구니 배열 [{name, option, qty}]
+        let cart = [];
         
         let selectedMenuName = "";
         let selectedOption = "HOT";
+        let selectedBeanOpt = "REGULAR";
+        let selectedCinnamonOpt = "O";
+        let isCoffeeMenu = false;
+        let isCappuccinoMenu = false;
         let modalQty = 1;
 
         const i18n = {
@@ -214,13 +234,25 @@
                 selectBtn: "선택하기",
                 cartTitle: "장바구니 내역",
                 emptyCart: "선택된 메뉴가 없습니다. 메뉴를 터치해 주세요.",
+                memoLabel: "추가 요청사항 (선택사항)",
+                memoPlaceholder: "요청사항을 입력해 주세요 (예: 얼음은 따로 주세요)",
+                labelBean: "원두 선택",
+                beanRegular: "일반",
+                beanDecaf: "디카페인",
+                labelTemp: "온도 선택",
+                labelCinnamon: "시나몬 가루",
+                cinnamonYes: "시나몬 O",
+                cinnamonNo: "시나몬 X",
+                delBtn: "삭제",
                 submitBtn: (total) => total > 0 ? `주문하기 (총 ${total}잔)` : "주문하기",
                 loading: "주문을 전송 중입니다... 잠시만 기다려주세요.",
                 noTableAlert: "테이블 정보가 없습니다. QR 코드를 다시 스캔해 주세요.",
                 noItemAlert: "장바구니에 담긴 메뉴가 없습니다.",
-                confirmOrder: (table, summary) => `[${table}]번 테이블\n\n${summary}\n\n위 내용으로 주문을 전송하시겠습니까?`,
+                confirmOrder: (table, summary, memo) => `[${table}]번 테이블\n\n${summary}${memo ? '\n\n요청사항: ' + memo : ''}\n\n위 내용으로 주문을 전송하시겠습니까?`,
                 successAlert: "주문이 성공적으로 접수되었습니다!",
-                errorAlert: "주문 전송 중 오류가 발생했습니다."
+                errorAlert: "주문 전송 중 오류가 발생했습니다.",
+                titleDecaf: "- Decaffeinated Tea -",
+                titleCaffeine: "- Caffeine Tea -"
             },
             eng: {
                 tablePrefix: "Table No: ",
@@ -230,13 +262,25 @@
                 selectBtn: "Select",
                 cartTitle: "Cart Items",
                 emptyCart: "No items selected. Please tap a menu.",
+                memoLabel: "Additional Requests (Optional)",
+                memoPlaceholder: "Please enter any requests (e.g., Ice on the side)",
+                labelBean: "Coffee Beans",
+                beanRegular: "Regular",
+                beanDecaf: "Decaf",
+                labelTemp: "Temperature",
+                labelCinnamon: "Cinnamon Powder",
+                cinnamonYes: "Cinnamon Yes",
+                cinnamonNo: "Cinnamon No",
+                delBtn: "Delete",
                 submitBtn: (total) => total > 0 ? `Place Order (${total} cup(s) total)` : "Place Order",
                 loading: "Sending your order... Please wait.",
                 noTableAlert: "No table information found. Please scan the QR code again.",
                 noItemAlert: "Please add items to your cart.",
-                confirmOrder: (table, summary) => `[Table ${table}]\n\n${summary}\n\nWould you like to place this order?`,
+                confirmOrder: (table, summary, memo) => `[Table ${table}]\n\n${summary}${memo ? '\n\nRequests: ' + memo : ''}\n\nWould you like to place this order?`,
                 successAlert: "Your order has been successfully placed!",
-                errorAlert: "An error occurred while sending your order."
+                errorAlert: "An error occurred while sending your order.",
+                titleDecaf: "- Decaffeinated Tea -",
+                titleCaffeine: "- Caffeine Tea -"
             }
         };
 
@@ -272,6 +316,12 @@
             const emptyEl = document.getElementById('empty-cart-text');
             if (emptyEl) emptyEl.innerText = i18n[lang].emptyCart;
 
+            document.getElementById('memo-label-text').innerText = i18n[lang].memoLabel;
+            document.getElementById('order-memo').placeholder = i18n[lang].memoPlaceholder;
+
+            document.getElementById('title-decaf').innerText = i18n[lang].titleDecaf;
+            document.getElementById('title-caffeine').innerText = i18n[lang].titleCaffeine;
+
             document.getElementById('loading-text').innerText = i18n[lang].loading;
             
             document.querySelector('.btn-add').innerText = lang === 'kor' ? "장바구니 담기" : "Add to Cart";
@@ -282,9 +332,13 @@
 
         setLanguage('kor');
 
-        function openOptionModal(menuName, availableOpts) {
+        function openOptionModal(menuName, availableOpts, hasCinnamon, isCoffee) {
             selectedMenuName = menuName;
+            isCappuccinoMenu = hasCinnamon;
+            isCoffeeMenu = isCoffee;
             modalQty = 1;
+            selectedBeanOpt = "REGULAR";
+            selectedCinnamonOpt = "O";
             document.getElementById('modal-qty').innerText = modalQty;
             
             const isEng = (currentLang === 'eng');
@@ -296,19 +350,58 @@
             });
             document.getElementById('modal-menu-name').innerText = displayName;
 
+            // 원두 옵션 영역
+            const beanSec = document.getElementById('bean-section');
+            if (isCoffeeMenu) {
+                beanSec.style.display = 'block';
+                document.getElementById('label-bean').innerText = i18n[currentLang].labelBean;
+                document.getElementById('bean-normal').innerText = currentLang === 'eng' ? 'Regular' : '일반';
+                document.getElementById('bean-decaf').innerText = currentLang === 'eng' ? 'Decaf' : '디카페인';
+                selectBean('REGULAR');
+            } else {
+                beanSec.style.display = 'none';
+            }
+
+            // 온도 옵션 영역
+            document.getElementById('label-temp').innerText = i18n[currentLang].labelTemp;
             const optContainer = document.getElementById('modal-option-buttons');
             if (availableOpts.length === 1) {
                 selectedOption = 'HOT';
-                optContainer.innerHTML = `<button class="opt-btn opt-hot" style="flex:1;">HOT</button>`;
+                optContainer.innerHTML = `<button class="opt-btn active" style="flex:1;">HOT</button>`;
             } else {
                 selectedOption = 'HOT';
                 optContainer.innerHTML = `
-                    <button id="opt-hot-btn" class="opt-btn opt-hot" style="background:#ff6b6b; color:#fff;" onclick="selectOption('HOT')">HOT</button>
-                    <button id="opt-iced-btn" class="opt-btn opt-iced" onclick="selectOption('ICED')">ICED</button>
+                    <button id="opt-hot-btn" class="opt-btn active" onclick="selectOption('HOT')">HOT</button>
+                    <button id="opt-iced-btn" class="opt-btn" onclick="selectOption('ICED')">ICED</button>
                 `;
             }
 
+            // 시나몬 영역
+            const cinnamonSec = document.getElementById('cinnamon-section');
+            if (isCappuccinoMenu) {
+                cinnamonSec.style.display = 'block';
+                document.getElementById('label-cinnamon').innerText = i18n[currentLang].labelCinnamon;
+                document.getElementById('cinnamon-yes').innerText = i18n[currentLang].cinnamonYes;
+                document.getElementById('cinnamon-no').innerText = i18n[currentLang].cinnamonNo;
+                selectCinnamon('O');
+            } else {
+                cinnamonSec.style.display = 'none';
+            }
+
             document.getElementById('optionModal').style.display = 'flex';
+        }
+
+        function selectBean(bOpt) {
+            selectedBeanOpt = bOpt;
+            const nBtn = document.getElementById('bean-normal');
+            const dBtn = document.getElementById('bean-decaf');
+            if(bOpt === 'REGULAR') {
+                nBtn.className = 'opt-btn active';
+                dBtn.className = 'opt-btn';
+            } else {
+                dBtn.className = 'opt-btn active';
+                nBtn.className = 'opt-btn';
+            }
         }
 
         function selectOption(opt) {
@@ -317,12 +410,25 @@
             const icedBtn = document.getElementById('opt-iced-btn');
             if(hotBtn && icedBtn) {
                 if(opt === 'HOT') {
-                    hotBtn.style.background = '#ff6b6b'; hotBtn.style.color = '#fff';
-                    icedBtn.style.background = '#e7f5ff'; icedBtn.style.color = '#339af0';
+                    hotBtn.className = 'opt-btn active';
+                    icedBtn.className = 'opt-btn';
                 } else {
-                    icedBtn.style.background = '#339af0'; icedBtn.style.color = '#fff';
-                    hotBtn.style.background = '#fff5f5'; hotBtn.style.color = '#ff6b6b';
+                    icedBtn.className = 'opt-btn active';
+                    hotBtn.className = 'opt-btn';
                 }
+            }
+        }
+
+        function selectCinnamon(cOpt) {
+            selectedCinnamonOpt = cOpt;
+            const yBtn = document.getElementById('cinnamon-yes');
+            const nBtn = document.getElementById('cinnamon-no');
+            if(cOpt === 'O') {
+                yBtn.className = 'opt-btn active';
+                nBtn.className = 'opt-btn';
+            } else {
+                nBtn.className = 'opt-btn active';
+                yBtn.className = 'opt-btn';
             }
         }
 
@@ -338,11 +444,14 @@
         }
 
         function addToCart() {
-            const existing = cart.find(item => item.name === selectedMenuName && item.option === selectedOption);
+            const beanStr = isCoffeeMenu && selectedBeanOpt === 'DECAF' ? (currentLang === 'eng' ? 'Decaf' : '디카페인') : '';
+            const cinnamonStr = isCappuccinoMenu ? (selectedCinnamonOpt === 'O' ? (currentLang === 'eng' ? 'Cinnamon Yes' : '시나몬 O') : (currentLang === 'eng' ? 'Cinnamon No' : '시나몬 X')) : '';
+            
+            const existing = cart.find(item => item.name === selectedMenuName && item.option === selectedOption && item.bean === beanStr && item.cinnamon === cinnamonStr);
             if (existing) {
                 existing.qty += modalQty;
             } else {
-                cart.push({ name: selectedMenuName, option: selectedOption, qty: modalQty });
+                cart.push({ name: selectedMenuName, option: selectedOption, bean: beanStr, cinnamon: cinnamonStr, qty: modalQty });
             }
             closeOptionModal();
             updateCartUI();
@@ -376,12 +485,15 @@
                 });
 
                 const badgeClass = item.option === 'HOT' ? 'badge-hot' : 'badge-iced';
+                const beanBadge = item.bean ? `<span class="badge-decaf">${item.bean}</span>` : '';
+                const cinnamonBadge = item.cinnamon ? `<span class="badge-cinnamon">${item.cinnamon}</span>` : '';
+                const qtyText = currentLang === 'eng' ? `${item.qty} cup(s)` : `${item.qty}잔`;
 
                 const div = document.createElement('div');
                 div.className = 'cart-item';
                 div.innerHTML = `
-                    <span><b>${displayName}</b> <span class="${badgeClass}">${item.option}</span> (${item.qty}잔)</span>
-                    <button class="btn-del" onclick="removeFromCart(${index})" data-kor="삭제" data-eng="Del">삭제</button>
+                    <span><b>${displayName}</b> ${beanBadge} <span class="${badgeClass}">${item.option}</span> ${cinnamonBadge} (${qtyText})</span>
+                    <button class="btn-del" onclick="removeFromCart(${index})">${i18n[currentLang].delBtn}</button>
                 `;
                 cartListEl.appendChild(div);
             });
@@ -399,10 +511,16 @@
                 return;
             }
 
-            const summaryText = cart.map(i => `${i.name} [${i.option}] (${i.qty}잔)`).join('\n');
-            const fullMenuNameForGAS = cart.map(i => `${i.name} (${i.option}) ${i.qty}잔`).join(', ');
+            const memoText = document.getElementById('order-memo').value.trim();
 
-            if (confirm(i18n[currentLang].confirmOrder(tableNo, summaryText))) {
+            const summaryText = cart.map(i => `${i.name} [${i.bean ? i.bean + ', ' : ''}${i.option}${i.cinnamon ? ', ' + i.cinnamon : ''}] (${currentLang === 'eng' ? i.qty + ' cup(s)' : i.qty + '잔'})`).join('\n');
+            
+            let fullMenuNameForGAS = cart.map(i => `${i.name} (${i.bean ? i.bean + ', ' : ''}${i.option}${i.cinnamon ? ', ' + i.cinnamon : ''}) ${i.qty}잔`).join(', ');
+            if (memoText) {
+                fullMenuNameForGAS += ` [요청사항: ${memoText}]`;
+            }
+
+            if (confirm(i18n[currentLang].confirmOrder(tableNo, summaryText, memoText))) {
                 const loadingText = document.getElementById('loading-text');
                 loadingText.style.display = 'block';
 
@@ -419,6 +537,7 @@
                     loadingText.style.display = 'none';
                     alert(i18n[currentLang].successAlert);
                     cart = [];
+                    document.getElementById('order-memo').value = '';
                     updateCartUI();
                 })
                 .catch(error => {
