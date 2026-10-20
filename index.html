@@ -3,43 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>커피 주문 시스템</title>
+    <title>THE VIEW Coffee-Order</title>
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }
         .container { max-width: 480px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
-        .table-badge { display: inline-block; background: #007bff; color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; margin-top: 8px; }
-        .menu-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; margin-bottom: 12px; }
-        .menu-name { font-size: 16px; font-weight: bold; color: #333; }
-        .btn-order { background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        
+        /* 헤더 및 타이틀 스타일 수정 */
+        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .brand-title { margin: 0; padding: 0; }
+        .brand-main { font-size: 26px; font-weight: 800; color: #1a1a1a; letter-spacing: 4px; line-height: 1.2; text-transform: uppercase; }
+        .brand-sub { font-size: 18px; font-weight: 600; color: #555; letter-spacing: 3px; margin-top: 6px; }
+        
+        .table-badge { display: inline-block; background: #007bff; color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; margin-top: 14px; }
+        
+        /* 메뉴 카드가 가로로 넓고 깔끔하게 배치되도록 스타일 설정 */
+        .menu-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid #eee; }
+        .menu-name { font-size: 16px; font-weight: bold; color: #333; flex: 1; }
+        
+        /* 수량 조절 및 주문 버튼 영역 */
+        .order-controls { display: flex; align-items: center; gap: 8px; }
+        .btn-qty { background: #e9ecef; border: 1px solid #ced4da; width: 32px; height: 32px; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-qty:active { background: #dee2e6; }
+        .qty-val { font-size: 16px; font-weight: bold; width: 24px; text-align: center; }
+        .btn-order { background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .btn-order:hover { background-color: #218838; }
-        .loading { display: none; text-align: center; color: #666; margin-top: 10px; font-size: 14px; }
+        
+        .loading { display: none; text-align: center; color: #007bff; margin-top: 15px; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="header">
-            <h2>☕ THE VIEW Coffee-Order ☕</h2>
+            <div class="brand-title">
+                <div class="brand-main">THE VIEW</div>
+                <div class="brand-sub">☕Coffee-Order☕</div>
+            </div>
             <div id="table-display" class="table-badge">테이블 확인 중...</div>
         </div>
 
         <div id="menu-list">
+            <!-- 메뉴 1: 아메리카노 (HOT) -->
             <div class="menu-card">
                 <span class="menu-name">아메리카노 (HOT)</span>
-                <button class="btn-order" onclick="submitOrder('아메리카노 (HOT)')">주문하기</button>
+                <div class="order-controls">
+                    <button class="btn-qty" onclick="changeQty('qty-1', -1)">-</button>
+                    <span id="qty-1" class="qty-val">1</span>
+                    <button class="btn-qty" onclick="changeQty('qty-1', 1)">+</button>
+                    <button class="btn-order" onclick="submitOrder('아메리카노 (HOT)', 'qty-1')">주문하기</button>
+                </div>
             </div>
+
+            <!-- 메뉴 2: 카페라떼 (ICE) -->
             <div class="menu-card">
                 <span class="menu-name">카페라떼 (ICE)</span>
-                <button class="btn-order" onclick="submitOrder('카페라떼 (ICE)')">주문하기</button>
+                <div class="order-controls">
+                    <button class="btn-qty" onclick="changeQty('qty-2', -1)">-</button>
+                    <span id="qty-2" class="qty-val">1</span>
+                    <button class="btn-qty" onclick="changeQty('qty-2', 1)">+</button>
+                    <button class="btn-order" onclick="submitOrder('카페라떼 (ICE)', 'qty-2')">주문하기</button>
+                </div>
             </div>
         </div>
+
         <div id="loading-text" class="loading">주문을 전송 중입니다... 잠시만 기다려주세요.</div>
     </div>
 
     <script>
-        // ⚠️ 아래 큰따옴표 사이에 발급받은 구글 앱스 스크립트 웹 앱 URL을 넣으세요!
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby27o8Wj9DJMuCazx-nTbk3b3qwr_MMJQtsGycL1UybyRhBCUuQVniedVNq-ruIqfyEcw/exec";
+        // ⚠️ 구글 앱스 스크립트 웹 앱 URL을 입력하세요!
+        const GAS_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
         // 1. URL 파라미터에서 테이블 번호 추출
         const urlParams = new URLSearchParams(window.location.search);
@@ -48,37 +80,51 @@
         // 2. 화면 배지에 테이블 번호 표시
         document.getElementById('table-display').innerText = `테이블 번호: ${tableNo}`;
 
-        // 3. 주문 전송 함수 (구글 시트 연동)
-        function submitOrder(menuName) {
+        // 3. 수량 변경 함수 (최소 1개, 최대 10개)
+        function changeQty(elementId, change) {
+            const qtyEl = document.getElementById(elementId);
+            let currentQty = parseInt(qtyEl.innerText);
+            currentQty += change;
+            if (currentQty < 1) currentQty = 1;
+            if (currentQty > 10) currentQty = 10;
+            qtyEl.innerText = currentQty;
+        }
+
+        // 4. 주문 전송 함수 (메뉴명 + 수량 조합 전송)
+        function submitOrder(menuName, qtyElementId) {
             if (tableNo === '미지정') {
                 alert('테이블 정보가 없습니다. QR 코드를 다시 스캔해 주세요.');
                 return;
             }
 
-            if (confirm(`[${tableNo}]번 테이블\n'${menuName}' 주문을 전송하시겠습니까?`)) {
+            const quantity = document.getElementById(qtyElementId).innerText;
+            const fullMenuName = `${menuName} (${quantity}잔)`;
+
+            if (confirm(`[${tableNo}]번 테이블\n'${fullMenuName}' 주문을 전송하시겠습니까?`)) {
                 const loadingText = document.getElementById('loading-text');
                 loadingText.style.display = 'block';
 
-                // 구글 시트로 데이터 전송 (fetch API)
                 fetch(GAS_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // 구글 앱스 스크립트 CORS 우회 설정
+                    mode: 'no-cors',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         tableNo: tableNo,
-                        menu: menuName
+                        menu: fullMenuName
                     })
                 })
                 .then(() => {
                     loadingText.style.display = 'none';
-                    alert('주문이 성공적으로 접수되었습니다! 잠시만 기다려 주세요.');
+                    alert('주문이 성공적으로 접수되었습니다!');
+                    // 주문 완료 후 수량을 다시 1로 리셋
+                    document.getElementById(qtyElementId).innerText = "1";
                 })
                 .catch(error => {
                     loadingText.style.display = 'none';
                     console.error('Error:', error);
-                    alert('주문 전송 중 오류가 발생했습니다. 다시 시도해 주세요.');
+                    alert('주문 전송 중 오류가 발생했습니다.');
                 });
             }
         }
