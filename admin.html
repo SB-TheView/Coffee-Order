@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE VIEW - 바리스타 대시보드</title>
     <style>
-        /* 화이트 톤앤매너 배경 및 폰트 설정 */
         body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #f4f6f9; color: #333; user-select: none; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         h1 { margin: 0; color: #1a1a1a; font-size: 24px; }
@@ -14,10 +13,8 @@
         .btn-history { background: #fff; color: #333; border: 1px solid #ccc; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .btn-history:hover { background: #e9ecef; }
 
-        /* 주문 카드 그리드 배열 */
         .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 15px; }
         
-        /* 기본 카드 (접수대기 상태: 화이트 배경에 깔끔한 테두리) */
         .order-card { 
             background: #ffffff; 
             border: 2px solid #e2e8f0; 
@@ -28,11 +25,9 @@
             transition: all 0.15s ease; 
         }
         
-        /* 제조완료 상태 (은은한 연두빛 배경) */
         .order-card.status-making { background: #e6f4ea !important; border-color: #34a853 !important; }
         .order-card.status-making .status-badge { background-color: #34a853; color: #fff; }
 
-        /* 제공완료 상태 (은은한 하늘빛 배경 및 투명도) */
         .order-card.status-served { background: #e8f0fe !important; border-color: #1a73e8 !important; opacity: 0.8; }
         .order-card.status-served .status-badge { background-color: #1a73e8; color: #fff; }
 
@@ -42,7 +37,6 @@
 
         .menu-list-box { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         
-        /* 개별 주문 항목 행 */
         .menu-item-row { 
             font-size: 15px; 
             font-weight: bold; 
@@ -58,13 +52,12 @@
             gap: 6px;
         }
 
-        /* 🎨 요청하신 항목별 가시성 컬러 뱃지 시스템 */
+        /* 🎨 가시성 컬러 뱃지 시스템 */
         .badge-hot { background: #ff6b6b; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .badge-iced { background: #339af0; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .badge-decaf { background: #2ed573; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .badge-cinnamon { background: #795548; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
 
-        /* 고객 요청사항 메모 강조 박스 (눈에 띄는 노란 배경) */
         .item-memo-box { 
             background: #fff3cd; 
             border-left: 4px solid #ffc107; 
@@ -129,20 +122,28 @@
         let previousOrderCount = null;
         let cachedOrders = [];
 
-        // 영문 및 기존 텍스트를 파싱하여 요청하신 순서와 컬러 배지로 재구성하는 함수
+        // 메뉴 번역 사전
+        const menuMap = {
+            "Espresso": "에스프레소", "Double Espresso (Doppio)": "더블 에스프레소 (도피오)",
+            "Americano": "아메리카노", "Cafe Latte": "카페라떼", "Vanilla Latte": "바닐라라떼", "Cappuccino": "카푸치노",
+            "Chamomile": "카모마일", "Peppermint": "페퍼민트", "Rooibos": "루이보스", "Red Berry": "레드베리",
+            "Green Tea": "녹차", "Earl Grey": "얼그레이", "English Breakfast": "잉글리쉬 블랙퍼스트", "Milk Chocolate": "밀크 초콜릿"
+        };
+
+        // 안전 정규식 파싱 함수
         function formatMenuDisplay(rawText) {
             if (!rawText) return "";
             
-            // 전역 요청사항 분리
             let globalMemo = "";
             let itemsText = rawText;
-            if (rawText.includes("요청사항:")) {
-                const parts = rawText.split("요청사항:");
+            if (rawText.includes("[요청사항:") || rawText.includes("[Requests:")) {
+                const splitTag = rawText.includes("[요청사항:") ? "[요청사항:" : "[Requests:";
+                const parts = rawText.split(splitTag);
                 itemsText = parts[0].trim();
-                globalMemo = parts[1].replace(/\[\vert{}\]/g, "").trim();
+                globalMemo = parts[1].replace("]", "").trim();
             }
 
-            // 개별 메뉴 항목 파싱 (쉼표 기준 분리)
+            // 개별 아이템 파싱
             const itemChunks = itemsText.split(',');
             let htmlOutput = "";
 
@@ -150,40 +151,35 @@
                 let text = chunk.trim();
                 if (!text) return;
 
-                // 1. 영어 명칭 -> 한국어 번역
-                const menuMap = {
-                    "Espresso": "에스프레소", "Double Espresso (Doppio)": "더블 에스프레소 (도피오)",
-                    "Americano": "아메리카노", "Cafe Latte": "카페라떼", "Vanilla Latte": "바닐라라떼", "Cappuccino": "카푸치노",
-                    "Chamomile": "카모마일", "Peppermint": "페퍼민트", "Rooibos": "루이보스", "Red Berry": "레드베리",
-                    "Green Tea": "녹차", "Earl Grey": "얼그레이", "English Breakfast": "잉글리쉬 블랙퍼스트", "Milk Chocolate": "밀크 초콜릿"
-                };
-                for (let [eng, kor] of Object.entries(menuMap)) {
-                    text = text.replace(new RegExp(eng, 'g'), kor);
-                }
-
-                // 2. 옵션 및 수량 추출 변수
-                let isHot = text.includes("HOT");
-                let isIced = text.includes("ICED") || text.includes("ICE");
-                let isDecaf = text.includes("디카페인") || text.includes("Decaf");
-                let isCinnamonYes = text.includes("시나몬 O") || text.includes("Cinnamon Yes");
-                let isCinnamonNo = text.includes("시나몬 X") || text.includes("Cinnamon No");
-
-                // 수량 추출 (예: "1잔", "1 cup(s)")
-                let qtyMatch = text.match(/(\d+)(잔|cup\(s\))/);
+                // 1. 수량 추출 (*1)
+                let qtyMatch = text.match(/(\d+)\s*(잔|cup\(s\))/i);
                 let qtyNum = qtyMatch ? qtyMatch[1] : "1";
 
-                // 순서 재구성: [HOT/ICED] [품목명] [원두] [시나몬여부] *개수
-                // 품목 이름만 남기기 위해 옵션 단어들 제거 후 정리
-                let cleanName = text
-                    .replace(/HOT|ICED|ICE|디카페인|Decaf|시나몬 O|시나몬 X|Cinnamon Yes|Cinnamon No|Regular|일반|,|\(\vert{}\)|\d+잔|\d+ cup\(s\)/g, "")
-                    .trim();
+                // 2. 온도 체크 (HOT / ICED)
+                let isHot = text.includes("HOT");
+                let isIced = text.includes("ICED") || text.includes("ICE");
 
-                // 뱃지 HTML 생성
+                // 3. 디카페인 체크
+                let isDecaf = text.includes("디카페인") || text.includes("Decaf");
+
+                // 4. 시나몬 체크
+                let isCinnamonYes = text.includes("시나몬 O") || text.includes("Cinnamon Yes");
+
+                // 5. 품목명 정제 및 번역
+                let cleanName = text;
+                // 괄호 및 옵션 키워드 제거
+                cleanName = cleanName.replace(/\[.*?\]/g, "").replace(/\(.*?\)/g, ""); // 괄호 통째로 제거
+                for (let [eng, kor] of Object.entries(menuMap)) {
+                    cleanName = cleanName.replace(new RegExp(eng, 'g'), kor);
+                }
+                cleanName = cleanName.replace(/\d+잔|\d+ cup\(s\)/gi, "").trim();
+
+                // 뱃지 생성
                 let tempBadge = isHot ? `<span class="badge-hot">HOT</span>` : (isIced ? `<span class="badge-iced">ICED</span>` : "");
-                let decafBadge = isDecaf ? `<span class="badge-decaf">디카페인</span>` : ""; // 디카페인인 경우에만 노출
-                let cinnamonBadge = isCinnamonYes ? `<span class="badge-cinnamon">시나몬 O</span>` : (isCinnamonNo ? `<span class="badge-cinnamon" style="background:#555;">시나몬 X</span>` : "");
+                let decafBadge = isDecaf ? `<span class="badge-decaf">디카페인</span>` : "";
+                let cinnamonBadge = isCinnamonYes ? `<span class="badge-cinnamon">시나몬 O</span>` : "";
 
-                // 최종 한 줄 조합 (요청하신 순서 반영)
+                // 순서 조합: [HOT/ICED] [품목명] [원두] [시나몬여부] *개수
                 htmlOutput += `
                     <div class="menu-item-row">
                         ${tempBadge} <b>${cleanName}</b> ${decafBadge} ${cinnamonBadge} <b>*${qtyNum}</b>
