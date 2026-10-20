@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>바리스타 실시간 주문 대시보드</title>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #121212; color: #fff; }
+        h1 { text-align: center; color: #f8f9fa; margin-bottom: 20px; }
+        .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .order-card { background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .table-badge { background: #ff4757; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 14px; }
+        .menu-text { font-size: 18px; font-weight: bold; margin: 15px 0; color: #ffa502; }
+        .time-text { font-size: 12px; color: #aaa; }
+        .no-order { text-align: center; color: #666; grid-column: 1 / -1; margin-top: 50px; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <h1>☕ 실시간 주문 접수 현황 (바 대시보드)</h1>
+    <div id="order-list" class="order-container">
+        <div class="no-order">주문 데이터를 불러오는 중...</div>
+    </div>
+
+    <script>
+        // ⚠️ 방금 발급받으신 구글 앱스 스크립트 웹 앱 URL을 여기에 넣으세요!
+        const GAS_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+        function fetchOrders() {
+            fetch(GAS_URL)
+                .then(response => response.json())
+                .then(data => {
+                    const orderListEl = document.getElementById('order-list');
+                    orderListEl.innerHTML = '';
+
+                    if (data.length === 0) {
+                        orderListEl.innerHTML = '<div class="no-order">현재 대기 중인 주문이 없습니다.</div>';
+                        return;
+                    }
+
+                    // 최신 주문이 위로 오도록 역순 출력
+                    data.reverse().forEach(order => {
+                        const card = document.createElement('div');
+                        card.className = 'order-card';
+                        card.innerHTML = `
+                            <div><span class="table-badge">테이블: ${order.tableNo}</span></div>
+                            <div class="menu-text">${order.menu}</div>
+                            <div class="time-text">접수 시간: ${order.timestamp}</div>
+                        `;
+                        orderListEl.appendChild(card);
+                    });
+                })
+                .catch(err => console.error('주문 데이터 로드 실패:', err));
+        }
+
+        // 페이지 최초 로드 시 실행 및 5초마다 자동 새로고침 (실시간 효과)
+        fetchOrders();
+        setInterval(fetchOrders, 5000);
+    </script>
+
+</body>
+</html>
