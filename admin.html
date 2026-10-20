@@ -35,13 +35,15 @@
         .table-badge { background: #ff4757; color: white; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 15px; }
         .status-badge { background: #444; color: #ccc; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
 
-        .menu-list-box { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .menu-list-box { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
         .menu-item { font-size: 16px; font-weight: bold; color: #ffa502; background: rgba(255,255,255,0.05); padding: 8px 10px; border-radius: 6px; }
+
+        /* 고객 요청사항 메모 강조 박스 */
+        .memo-box { background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107; color: #ffecb3; padding: 8px 10px; border-radius: 4px; font-size: 13px; margin-bottom: 12px; line-height: 1.4; }
 
         .time-text { font-size: 12px; color: #aaa; text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
         .no-order { text-align: center; color: #666; grid-column: 1 / -1; margin-top: 50px; font-size: 18px; }
 
-        /* 모달 창 스타일 */
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
         .modal-content { background-color: #1e1e1e; margin: 5% auto; padding: 20px; border: 1px solid #444; width: 85%; max-width: 650px; border-radius: 12px; max-height: 80vh; overflow-y: auto; color: #fff; }
         .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
@@ -57,10 +59,10 @@
 <body>
 
     <div class="top-bar">
-        <h1>☕ THE VIEW 실시간 주문 대시보드</h1>
-        <button class="btn-history" onclick="openHistoryModal()">📋 주문 히스토리 보기</button>
+        <h1>THE VIEW 실시간 주문 대시보드</h1>
+        <button class="btn-history" onclick="openHistoryModal()">주문 히스토리 보기</button>
     </div>
-    <div class="sub-guide">💡 카드를 <b>더블클릭(2번 터치)</b>하면 [제조완료(초록)] ➔ [제공완료(파랑, 30초 후 숨김)]로 즉시 전환됩니다.</div>
+    <div class="sub-guide">카드를 더블클릭(2번 터치)하면 [제조완료(초록)] ➔ [제공완료(파랑, 30초 후 숨김)]로 즉시 전환됩니다.</div>
 
     <div id="order-list" class="order-container">
         <div class="no-order">주문 데이터를 불러오는 중...</div>
@@ -70,44 +72,33 @@
     <div id="historyModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeHistoryModal()">&times;</span>
-            <h2>📋 전체 주문 히스토리 및 복구</h2>
+            <h2>전체 주문 히스토리 및 복구</h2>
             <table class="history-table">
                 <thead>
                     <tr>
                         <th>접수시간</th>
                         <th>테이블</th>
-                        <th>메뉴 내역</th>
+                        <th>메뉴 및 요청사항 내역</th>
                         <th>상태</th>
                         <th>관리</th>
                     </tr>
                 </thead>
-                <tbody id="history-table-body">
-                    <!-- 데이터 동적 삽입 -->
-                </tbody>
+                <tbody id="history-table-body"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // ⚠️ 구글 앱스 스크립트 웹 앱 URL을 입력하세요!
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzFII67V5lEWlEOMH9x9Ao8PnQUhk4Z9KZJ2x0PB-5GPa8XHKhTqDa8htVK2X-rhbrKVw/exec";
 
         let previousOrderCount = null;
         let cachedOrders = [];
 
-        // 로컬 스토리지에서 제공완료된 시간 기록 가져오기
         function getServedTimes() {
-            try {
-                return JSON.parse(localStorage.getItem('the_view_served_times') || '{}');
-            } catch (e) {
-                return {};
-            }
+            try { return JSON.parse(localStorage.getItem('the_view_served_times') || '{}'); } catch (e) { return {}; }
         }
-
         function saveServedTimes(times) {
-            try {
-                localStorage.setItem('the_view_served_times', JSON.stringify(times));
-            } catch (e) {}
+            try { localStorage.setItem('the_view_served_times', JSON.stringify(times)); } catch (e) {}
         }
 
         function playNotificationSound() {
@@ -165,17 +156,11 @@
                     
                     const activeOrders = data.filter(order => {
                         if (order.status === "제공완료") {
-                            // 만약 로컬 스토리지에 기록이 없는데 '제공완료' 상태라면 새로 제공완료된 것으로 간주하고 시간 기록
                             if (!servedTimes[order.row]) {
                                 servedTimes[order.row] = now;
                                 saveServedTimes(servedTimes);
                             }
-
-                            // 제공완료 후 30초(30000ms)가 지났는지 체크
-                            const elapsed = now - servedTimes[order.row];
-                            if (elapsed > 30000) {
-                                return false; // 30초 경과했으므로 화면에서 숨김
-                            }
+                            if (now - servedTimes[order.row] > 30000) return false;
                         }
                         return true;
                     });
@@ -217,13 +202,23 @@
                 card.id = `card-${order.row}`;
                 card.setAttribute('ondblclick', `handleCardDblClick(${order.row}, '${order.status}')`);
 
-                let menuHtml = '';
-                if (order.menu) {
-                    order.menu.split(',').forEach(item => {
-                        menuHtml += `<div class="menu-item">${item.trim()}</div>`;
-                    });
+                // 메뉴와 요청사항 분리 처리
+                let rawMenu = order.menu || "";
+                let memoText = "";
+                if (rawMenu.includes("[요청사항:")) {
+                    const parts = rawMenu.split("[요청사항:");
+                    rawMenu = parts[0].trim();
+                    memoText = parts[1].replace("]", "").trim();
                 }
 
+                let menuHtml = '';
+                rawMenu.split(',').forEach(item => {
+                    if (item.trim()) {
+                        menuHtml += `<div class="menu-item">${item.trim()}</div>`;
+                    }
+                });
+
+                let memoHtml = memoText ? `<div class="memo-box"><b>요청사항:</b> ${memoText}</div>` : '';
                 const cleanTime = formatTime(order.timestamp);
 
                 card.innerHTML = `
@@ -233,6 +228,7 @@
                             <span class="status-badge">${statusLabel}</span>
                         </div>
                         <div class="menu-list-box">${menuHtml}</div>
+                        ${memoHtml}
                     </div>
                     <div class="time-text">${cleanTime} 접수</div>
                 `;
@@ -241,14 +237,8 @@
         }
 
         function handleCardDblClick(rowIdx, currentStatus) {
-            let nextStatus = '';
-            if (currentStatus === '접수대기' || !currentStatus) {
-                nextStatus = '제조완료';
-            } else if (currentStatus === '제조완료') {
-                nextStatus = '제공완료';
-            } else {
-                return;
-            }
+            let nextStatus = currentStatus === '제조완료' ? '제공완료' : '제조완료';
+            if (currentStatus === '제공완료') return;
 
             const cardEl = document.getElementById(`card-${rowIdx}`);
             if (cardEl) {
@@ -260,7 +250,6 @@
             const target = cachedOrders.find(o => o.row === rowIdx);
             if (target) target.status = nextStatus;
 
-            // 제공완료로 바뀔 때 현재 시각을 로컬 스토리지에 저장하여 30초 카운트다운 시작
             if (nextStatus === '제공완료') {
                 const servedTimes = getServedTimes();
                 servedTimes[rowIdx] = Date.now();
@@ -274,7 +263,6 @@
 
         function restoreOrder(rowIdx) {
             if (confirm("해당 주문을 다시 '접수대기' 상태로 복구하시겠습니까?")) {
-                // 복구 시 로컬 스토리지 타이머 기록 삭제
                 const servedTimes = getServedTimes();
                 delete servedTimes[rowIdx];
                 saveServedTimes(servedTimes);
@@ -295,9 +283,7 @@
             const tbody = document.getElementById('history-table-body');
             tbody.innerHTML = '';
 
-            const sortedHistory = [...cachedOrders].reverse();
-
-            sortedHistory.forEach(order => {
+            [...cachedOrders].reverse().forEach(order => {
                 const cleanDateTime = formatDateTime(order.timestamp);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -318,9 +304,8 @@
         }
 
         window.onclick = function(event) {
-            const modal = document.getElementById('historyModal');
-            if (event.target == modal) {
-                modal.style.display = 'none';
+            if (event.target == document.getElementById('historyModal')) {
+                closeHistoryModal();
             }
         }
 
