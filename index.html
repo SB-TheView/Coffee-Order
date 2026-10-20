@@ -13,6 +13,7 @@
         .menu-name { font-size: 16px; font-weight: bold; color: #333; }
         .btn-order { background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-order:hover { background-color: #218838; }
+        .loading { display: none; text-align: center; color: #666; margin-top: 10px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -33,17 +34,21 @@
                 <button class="btn-order" onclick="submitOrder('카페라떼 (ICE)')">주문하기</button>
             </div>
         </div>
+        <div id="loading-text" class="loading">주문을 전송 중입니다... 잠시만 기다려주세요.</div>
     </div>
 
     <script>
-        // 1. URL 파라미터에서 테이블 번호 추출 (예: ?table=A1A)
+        // ⚠️ 아래 큰따옴표 사이에 발급받은 구글 앱스 스크립트 웹 앱 URL을 넣으세요!
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxs5L_fz1o_3edgvlA5zGe5qnSc4r3OyyYaXcPBcxHlE_titNrkuCDQqciXXhy5lVx3Wg/exec";
+
+        // 1. URL 파라미터에서 테이블 번호 추출
         const urlParams = new URLSearchParams(window.location.search);
         const tableNo = urlParams.get('table') || '미지정';
 
         // 2. 화면 배지에 테이블 번호 표시
         document.getElementById('table-display').innerText = `테이블 번호: ${tableNo}`;
 
-        // 3. 주문 제출 함수 (다음 단계에서 구글 시트 API 연동 예정)
+        // 3. 주문 전송 함수 (구글 시트 연동)
         function submitOrder(menuName) {
             if (tableNo === '미지정') {
                 alert('테이블 정보가 없습니다. QR 코드를 다시 스캔해 주세요.');
@@ -51,8 +56,30 @@
             }
 
             if (confirm(`[${tableNo}]번 테이블\n'${menuName}' 주문을 전송하시겠습니까?`)) {
-                // 구글 앱스 스크립트(GAS) 연동 코드가 들어갈 자리입니다.
-                alert('주문이 접수되었습니다!');
+                const loadingText = document.getElementById('loading-text');
+                loadingText.style.display = 'block';
+
+                // 구글 시트로 데이터 전송 (fetch API)
+                fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // 구글 앱스 스크립트 CORS 우회 설정
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tableNo: tableNo,
+                        menu: menuName
+                    })
+                })
+                .then(() => {
+                    loadingText.style.display = 'none';
+                    alert('주문이 성공적으로 접수되었습니다! 잠시만 기다려 주세요.');
+                })
+                .catch(error => {
+                    loadingText.style.display = 'none';
+                    console.error('Error:', error);
+                    alert('주문 전송 중 오류가 발생했습니다. 다시 시도해 주세요.');
+                });
             }
         }
     </script>
