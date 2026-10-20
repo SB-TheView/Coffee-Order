@@ -10,8 +10,12 @@
         .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
         .order-card { background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .table-badge { background: #ff4757; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 14px; }
-        .menu-text { font-size: 18px; font-weight: bold; margin: 15px 0; color: #ffa502; }
-        .time-text { font-size: 12px; color: #aaa; }
+        
+        /* 메뉴 목록 스타일 수정 (항목별 줄바꿈 및 가독성 향상) */
+        .menu-list-box { margin: 15px 0; display: flex; flex-direction: column; gap: 6px; }
+        .menu-item { font-size: 16px; font-weight: bold; color: #ffa502; background: #2a2a2a; padding: 6px 10px; border-radius: 6px; display: flex; justify-content: space-between; }
+        
+        .time-text { font-size: 12px; color: #aaa; border-top: 1px solid #333; padding-top: 8px; margin-top: 10px; }
         .no-order { text-align: center; color: #666; grid-column: 1 / -1; margin-top: 50px; font-size: 18px; }
     </style>
 </head>
@@ -23,8 +27,8 @@
     </div>
 
     <script>
-        // ⚠️ 방금 발급받으신 구글 앱스 스크립트 웹 앱 URL을 여기에 넣으세요!
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby27o8Wj9DJMuCazx-nTbk3b3qwr_MMJQtsGycL1UybyRhBCUuQVniedVNq-ruIqfyEcw/exec";
+        // ⚠️ 구글 앱스 스크립트 웹 앱 URL을 입력하세요!
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzcPdwl0o5OyCZFnnaQ0hwnZ2gdzlbDOgGa23TADp-8sMGZoJ0ZP4i4eH7FOc4w-Wbv9w/exec";
 
         function fetchOrders() {
             fetch(GAS_URL)
@@ -42,9 +46,19 @@
                     data.reverse().forEach(order => {
                         const card = document.createElement('div');
                         card.className = 'order-card';
+
+                        // 쉼표(,) 기준으로 메뉴 문자열을 쪼개서 각각 줄바꿈 박스로 생성
+                        let menuHtml = '';
+                        if (order.menu) {
+                            const menuItems = order.menu.split(',');
+                            menuItems.forEach(item => {
+                                menuHtml += `<div class="menu-item"><span>${item.trim()}</span></div>`;
+                            });
+                        }
+
                         card.innerHTML = `
                             <div><span class="table-badge">테이블: ${order.tableNo}</span></div>
-                            <div class="menu-text">${order.menu}</div>
+                            <div class="menu-list-box">${menuHtml}</div>
                             <div class="time-text">접수 시간: ${order.timestamp}</div>
                         `;
                         orderListEl.appendChild(card);
@@ -53,7 +67,7 @@
                 .catch(err => console.error('주문 데이터 로드 실패:', err));
         }
 
-        // 페이지 최초 로드 시 실행 및 5초마다 자동 새로고침 (실시간 효과)
+        // 페이지 최초 로드 시 실행 및 5초마다 자동 새로고침
         fetchOrders();
         setInterval(fetchOrders, 5000);
     </script>
