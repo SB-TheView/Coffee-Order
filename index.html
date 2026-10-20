@@ -447,8 +447,8 @@
         }
 
         function addToCart() {
-            const beanKor = isCoffeeMenu && selectedBeanOpt === 'DECAF' ? '디카페인' : '';
-            const cinnamonKor = isCappuccinoMenu ? (selectedCinnamonOpt === 'O' ? '시나몬 O' : '') : '';
+            const beanKor = isCoffeeMenu && selectedBeanOpt === 'DECAF' ? '디카페인' : 'none';
+            const cinnamonKor = isCappuccinoMenu ? (selectedCinnamonOpt === 'O' ? '시나몬 O' : 'none') : 'none';
 
             const existing = cart.find(item => item.nameKor === selectedMenuKor && item.option === selectedOption && item.beanKor === beanKor && item.cinnamonKor === cinnamonKor);
             if (existing) {
@@ -488,8 +488,8 @@
                 totalQty += item.qty;
 
                 const displayName = currentLang === 'eng' ? item.nameEng : item.nameKor;
-                const displayBean = item.beanKor ? (currentLang === 'eng' ? 'Decaf' : '디카페인') : '';
-                const displayCinnamon = item.cinnamonKor ? (currentLang === 'eng' ? 'Cinnamon Yes' : '시나몬 O') : '';
+                const displayBean = (item.beanKor && item.beanKor !== 'none') ? (currentLang === 'eng' ? 'Decaf' : '디카페인') : '';
+                const displayCinnamon = (item.cinnamonKor && item.cinnamonKor !== 'none') ? (currentLang === 'eng' ? 'Cinnamon Yes' : '시나몬 O') : '';
 
                 const badgeClass = item.option === 'HOT' ? 'badge-hot' : 'badge-iced';
                 const beanBadge = displayBean ? `<span class="badge-decaf">${displayBean}</span>` : '';
@@ -499,7 +499,7 @@
                 const div = document.createElement('div');
                 div.className = 'cart-item';
                 div.innerHTML = `
-                    <span><b>${displayName}</b>${beanBadge} <span class="${badgeClass}">${item.option}</span> ${cinnamonBadge} (${qtyText})</span>
+                    <span><b>${displayName}</b> ${beanBadge} <span class="${badgeClass}">${item.option}</span> ${cinnamonBadge} (${qtyText})</span>
                     <button class="btn-del" onclick="removeFromCart(${index})">${i18n[currentLang].delBtn}</button>
                 `;
                 cartListEl.appendChild(div);
@@ -508,7 +508,6 @@
             document.getElementById('btn-submit-all').innerText = i18n[currentLang].submitBtn(totalQty);
         }
 
-        // 🚀 대시보드 전용 ' | ' 파이프 구분 데이터 포맷팅
         function submitCartOrder() {
             if (tableNo === '미지정') {
                 alert(i18n[currentLang].noTableAlert);
@@ -521,11 +520,10 @@
 
             const memoText = document.getElementById('order-memo').value.trim();
 
-            // 1. 손님 팝업 확인용 요약문
             const summaryText = cart.map(i => {
                 const name = currentLang === 'eng' ? i.nameEng : i.nameKor;
-                const bean = i.beanKor ? (currentLang === 'eng' ? 'Decaf' : '디카페인') : '';
-                const cinnamon = i.cinnamonKor ? (currentLang === 'eng' ? 'Cinnamon Yes' : '시나몬 O') : '';
+                const bean = (i.beanKor && i.beanKor !== 'none') ? (currentLang === 'eng' ? 'Decaf' : '디카페인') : '';
+                const cinnamon = (i.cinnamonKor && i.cinnamonKor !== 'none') ? (currentLang === 'eng' ? 'Cinnamon Yes' : '시나몬 O') : '';
                 const qtyUnit = currentLang === 'eng' ? `${i.qty} cup(s)` : `${i.qty}잔`;
                 
                 let opts = [];
@@ -536,11 +534,9 @@
                 return `${name} [${opts.join(', ')}] (${qtyUnit})`;
             }).join('\n');
             
-            // 2. 구글 시트 및 대시보드로 보낼 정돈된 데이터 (' | ' 구분)
             let fullMenuNameForGAS = cart.map(i => {
-                // 바리스타는 항상 한국어로 봐야하므로 무조건 한국어 기준 조립
-                return `${i.option} | ${i.nameKor} \vert{}${i.beanKor} | ${i.cinnamonKor} \vert{}${i.qty}`;
-            }).join(' ;; '); // 항목간 구분은 ' ;; '
+                return `${i.option} | ${i.nameKor} | ${i.beanKor} | ${i.cinnamonKor} | ${i.qty}`;
+            }).join(' ;; ');
 
             if (memoText) {
                 fullMenuNameForGAS += ` [요청사항: ${memoText}]`;
