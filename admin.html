@@ -3,63 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>바리스타 실시간 주문 대시보드</title>
+    <title>THE VIEW - 바리스타 대시보드</title>
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #121212; color: #fff; }
-        h1 { text-align: center; color: #f8f9fa; margin-bottom: 20px; }
+        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #121212; color: #fff; user-select: none; }
+        h1 { text-align: center; color: #f8f9fa; margin-bottom: 10px; }
+        .sub-guide { text-align: center; color: #888; font-size: 13px; margin-bottom: 25px; }
+        
         .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .order-card { background: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .table-badge { background: #ff4757; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 14px; }
         
-        /* 메뉴 목록 스타일 수정 (항목별 줄바꿈 및 가독성 향상) */
-        .menu-list-box { margin: 15px 0; display: flex; flex-direction: column; gap: 6px; }
-        .menu-item { font-size: 16px; font-weight: bold; color: #ffa502; background: #2a2a2a; padding: 6px 10px; border-radius: 6px; display: flex; justify-content: space-between; }
+        /* 기본 카드 (접수대기) */
+        .order-card { 
+            background: #1e1e1e; 
+            border: 2px solid #333; 
+            border-radius: 12px; 
+            padding: 16px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4); 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+        }
         
-        .time-text { font-size: 12px; color: #aaa; border-top: 1px solid #333; padding-top: 8px; margin-top: 10px; }
+        /* 2단계: 제조완료 (초록색 음영) */
+        .order-card.status-making { 
+            background: #0f381e !important; 
+            border-color: #2ed573 !important; 
+        }
+        .order-card.status-making .status-badge {
+            background-color: #2ed573;
+            color: #000;
+        }
+
+        /* 3단계: 제공완료 (파란색 음영) */
+        .order-card.status-served { 
+            background: #0d2a4a !important; 
+            border-color: #1e90ff !important; 
+            opacity: 0.85;
+        }
+        .order-card.status-served .status-badge {
+            background-color: #1e90ff;
+            color: #fff;
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .table-badge { background: #ff4757; color: white; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 15px; }
+        .status-badge { background: #444; color: #ccc; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+
+        .menu-list-box { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .menu-item { font-size: 16px; font-weight: bold; color: #ffa502; background: rgba(255,255,255,0.05); padding: 8px 10px; border-radius: 6px; }
+
+        .time-text { font-size: 12px; color: #aaa; text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
         .no-order { text-align: center; color: #666; grid-column: 1 / -1; margin-top: 50px; font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <h1>☕ 실시간 주문 접수 현황 (바 대시보드)</h1>
+    <h1>☕ THE VIEW 실시간 주문 대시보드</h1>
+    <div class="sub-guide">💡 카드를 <b>더블클릭(2번 터치)</b>하면 [제조완료(초록)] ➔ [제공완료(파랑, 30초 후 삭제)]로 변경됩니다.</div>
+
     <div id="order-list" class="order-container">
         <div class="no-order">주문 데이터를 불러오는 중...</div>
     </div>
 
     <script>
         // ⚠️ 구글 앱스 스크립트 웹 앱 URL을 입력하세요!
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzcPdwl0o5OyCZFnnaQ0hwnZ2gdzlbDOgGa23TADp-8sMGZoJ0ZP4i4eH7FOc4w-Wbv9w/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwU72rusi39-uhe-v6ukfqNHOX39tPzpf8Fp23QpNAlQJ1rpe_ZtOrzkr7dS4NNbeKlYQ/exec";
+
+        let previousOrderCount = 0;
+        let servedTimers = {}; // 제공완료 30초 소멸 타이머 관리
+
+        // 딩동 알림 소리 재생 함수 (Web Audio API)
+        function playNotificationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.6);
+            } catch (e) {
+                console.log("오디오 재생 실패:", e);
+            }
+        }
 
         function fetchOrders() {
             fetch(GAS_URL)
                 .then(response => response.json())
                 .then(data => {
                     const orderListEl = document.getElementById('order-list');
+                    
+                    // 제공완료 후 30초 지나 삭제된 건을 제외한 활성 주문 필터링
+                    const activeOrders = data.filter(order => {
+                        if (order.status === "제공완료" && servedTimers[order.row] === "EXPIRED") {
+                            return false;
+                        }
+                        return true;
+                    });
+
+                    // 신규 주문 감지 시 효과음 재생
+                    const currentPendingCount = activeOrders.filter(o => o.status === "접수대기").length;
+                    if (previousOrderCount !== null && currentPendingCount > previousOrderCount) {
+                        playNotificationSound();
+                    }
+                    previousOrderCount = currentPendingCount;
+
                     orderListEl.innerHTML = '';
 
-                    if (data.length === 0) {
+                    if (activeOrders.length === 0) {
                         orderListEl.innerHTML = '<div class="no-order">현재 대기 중인 주문이 없습니다.</div>';
                         return;
                     }
 
-                    // 최신 주문이 위로 오도록 역순 출력
-                    data.reverse().forEach(order => {
+                    activeOrders.reverse().forEach(order => {
                         const card = document.createElement('div');
-                        card.className = 'order-card';
+                        let statusClass = '';
+                        let statusLabel = '접수대기';
 
-                        // 쉼표(,) 기준으로 메뉴 문자열을 쪼개서 각각 줄바꿈 박스로 생성
+                        if (order.status === '제조완료') {
+                            statusClass = 'status-making';
+                            statusLabel = '제조완료';
+                        } else if (order.status === '제공완료') {
+                            statusClass = 'status-served';
+                            statusLabel = '제공완료 (30초 후 삭제)';
+                            
+                            // 제공완료 상태인데 타이머가 없으면 30초 카운트다운 시작
+                            if (!servedTimers[order.row]) {
+                                startServedTimer(order.row);
+                            }
+                        }
+
+                        card.className = `order-card ${statusClass}`;
+                        card.setAttribute('ondblclick', `handleCardDblClick(${order.row}, '${order.status}')`);
+
                         let menuHtml = '';
                         if (order.menu) {
                             const menuItems = order.menu.split(',');
                             menuItems.forEach(item => {
-                                menuHtml += `<div class="menu-item"><span>${item.trim()}</span></div>`;
+                                menuHtml += `<div class="menu-item">${item.trim()}</div>`;
                             });
                         }
 
                         card.innerHTML = `
-                            <div><span class="table-badge">테이블: ${order.tableNo}</span></div>
-                            <div class="menu-list-box">${menuHtml}</div>
-                            <div class="time-text">접수 시간: ${order.timestamp}</div>
+                            <div>
+                                <div class="card-header">
+                                    <span class="table-badge">테이블: ${order.tableNo}</span>
+                                    <span class="status-badge">${statusLabel}</span>
+                                </div>
+                                <div class="menu-list-box">${menuHtml}</div>
+                            </div>
+                            <div class="time-text">${order.timestamp.substring(11, 19)} 접수</div>
                         `;
                         orderListEl.appendChild(card);
                     });
@@ -67,7 +167,39 @@
                 .catch(err => console.error('주문 데이터 로드 실패:', err));
         }
 
-        // 페이지 최초 로드 시 실행 및 5초마다 자동 새로고침
+        // 더블 클릭 시 상태 전환
+        function handleCardDblClick(rowIdx, currentStatus) {
+            let nextStatus = '';
+            if (currentStatus === '접수대기' || !currentStatus) {
+                nextStatus = '제조완료';
+            } else if (currentStatus === '제조완료') {
+                nextStatus = '제공완료';
+            } else {
+                return; // 제공완료 상태에서는 더 이상 클릭 처리 안 함
+            }
+
+            fetch(`${GAS_URL}?action=updateStatus&row=${rowIdx}&status=${encodeURIComponent(nextStatus)}`)
+                .then(response => response.json())
+                .then(res => {
+                    if (res.status === "success") {
+                        if (nextStatus === '제공완료') {
+                            startServedTimer(rowIdx);
+                        }
+                        fetchOrders();
+                    }
+                });
+        }
+
+        // 제공완료 30초 후 화면에서 삭제 처리하는 타이머
+        function startServedTimer(rowIdx) {
+            servedTimers[rowIdx] = "RUNNING";
+            setTimeout(() => {
+                servedTimers[rowIdx] = "EXPIRED";
+                fetchOrders(); // 30초 후 화면 재갱신하여 카드 제거
+            }, 30000); // 30초 (30000ms)
+        }
+
+        // 5초마다 자동 새로고침
         fetchOrders();
         setInterval(fetchOrders, 5000);
     </script>
