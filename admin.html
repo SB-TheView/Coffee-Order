@@ -57,7 +57,7 @@
 <body>
 
     <div class="top-bar">
-        <h1> 실시간 주문 대시보드</h1>
+        <h1>☕ THE VIEW 실시간 주문 대시보드</h1>
         <button class="btn-history" onclick="openHistoryModal()">📋 주문 히스토리 보기</button>
     </div>
     <div class="sub-guide">💡 카드를 <b>더블클릭(2번 터치)</b>하면 [제조완료(초록)] ➔ [제공완료(파랑, 30초 후 숨김)]로 즉시 전환됩니다.</div>
@@ -93,8 +93,22 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzFII67V5lEWlEOMH9x9Ao8PnQUhk4Z9KZJ2x0PB-5GPa8XHKhTqDa8htVK2X-rhbrKVw/exec";
 
         let previousOrderCount = null;
-        let servedTimers = {}; 
         let cachedOrders = [];
+
+        // 로컬 스토리지에서 제공완료된 시간 기록 가져오기
+        function getServedTimes() {
+            try {
+                return JSON.parse(localStorage.getItem('the_view_served_times') || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveServedTimes(times) {
+            try {
+                localStorage.setItem('the_view_served_times', JSON.stringify(times));
+            } catch (e) {}
+        }
 
         function playNotificationSound() {
             try {
@@ -113,13 +127,11 @@
             } catch (e) {}
         }
 
-        // ISO 타임스탬프 또는 날짜 문자열을 보기 쉬운 로컬 형식으로 변환하는 함수
         function formatDateTime(timestampStr) {
             if (!timestampStr) return "";
             try {
                 const date = new Date(timestampStr);
                 if (!isNaN(date.getTime())) {
-                    // YYYY-MM-DD HH:mm:ss 형태로 보기 좋게 변환
                     const yyyy = date.getFullYear();
                     const mm = String(date.getMonth() + 1).padStart(2, '0');
                     const dd = String(date.getDate()).padStart(2, '0');
@@ -148,10 +160,22 @@
                 .then(response => response.json())
                 .then(data => {
                     cachedOrders = data;
+                    const servedTimes = getServedTimes();
+                    const now = Date.now();
                     
                     const activeOrders = data.filter(order => {
-                        if (order.status === "제공완료" && servedTimers[order.row] === "EXPIRED") {
-                            return false;
+                        if (order.status === "제공완료") {
+                            // 만약 로컬 스토리지에 기록이 없는데 '제공완료' 상태라면 새로 제공완료된 것으로 간주하고 시간 기록
+                            if (!servedTimes[order.row]) {
+                                servedTimes[order.row] = now;
+                                saveServedTimes(servedTimes);
+                            }
+
+                            // 제공완료 후 30초(30000ms)가 지났는지 체크
+                            const elapsed = now - servedTimes[order.row];
+                            if (elapsed > 30000) {
+                                return false; // 30초 경과했으므로 화면에서 숨김
+                            }
                         }
                         return true;
                     });
@@ -187,9 +211,6 @@
                 } else if (order.status === '제공완료') {
                     statusClass = 'status-served';
                     statusLabel = '제공완료 (30초 후 숨김)';
-                    if (!servedTimers[order.row]) {
-                        startServedTimer(order.row);
-                    }
                 }
 
                 card.className = `order-card ${statusClass}`;
@@ -239,8 +260,11 @@
             const target = cachedOrders.find(o => o.row === rowIdx);
             if (target) target.status = nextStatus;
 
+            // 제공완료로 바뀔 때 현재 시각을 로컬 스토리지에 저장하여 30초 카운트다운 시작
             if (nextStatus === '제공완료') {
-                startServedTimer(rowIdx);
+                const servedTimes = getServedTimes();
+                servedTimes[rowIdx] = Date.now();
+                saveServedTimes(servedTimes);
             }
 
             fetch(`${GAS_URL}?action=updateStatus&row=${rowIdx}&status=${encodeURIComponent(nextStatus)}`)
@@ -250,38 +274,21 @@
 
         function restoreOrder(rowIdx) {
             if (confirm("해당 주문을 다시 '접수대기' 상태로 복구하시겠습니까?")) {
-                delete servedTimers[rowIdx];
+                // 복구 시 로컬 스토리지 타이머 기록 삭제
+                const servedTimes = getServedTimes();
+                delete servedTimes[rowIdx];
+                saveServedTimes(servedTimes);
 
                 const target = cachedOrders.find(o => o.row === rowIdx);
                 if (target) target.status = '접수대기';
 
-                const activeOrders = cachedOrders.filter(order => {
-                    if (order.status === "제공완료" && servedTimers[order.row] === "EXPIRED") {
-                        return false;
-                    }
-                    return true;
-                });
-                renderDashboard(activeOrders);
+                fetchOrders();
                 closeHistoryModal();
 
                 fetch(`${GAS_URL}?action=updateStatus&row=${rowIdx}&status=접수대기`)
                     .then(response => response.json())
                     .catch(err => console.error('복구 전송 실패:', err));
             }
-        }
-
-        function startServedTimer(rowIdx) {
-            servedTimers[rowIdx] = "RUNNING";
-            setTimeout(() => {
-                servedTimers[rowIdx] = "EXPIRED";
-                const activeOrders = cachedOrders.filter(order => {
-                    if (order.status === "제공완료" && servedTimers[rowIdx] === "EXPIRED") {
-                        return false;
-                    }
-                    return true;
-                });
-                renderDashboard(activeOrders);
-            }, 30000);
         }
 
         function openHistoryModal() {
@@ -291,7 +298,7 @@
             const sortedHistory = [...cachedOrders].reverse();
 
             sortedHistory.forEach(order => {
-                const cleanDateTime = formatDateTime(order.timestamp); // 보기 좋은 날짜/시간으로 파싱
+                const cleanDateTime = formatDateTime(order.timestamp);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${cleanDateTime}</td>
