@@ -52,11 +52,11 @@
             gap: 6px;
         }
 
-        /* 🎨 뱃지 색상 정의 */
-        .badge-hot { background: #ff6b6b; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .badge-iced { background: #339af0; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .badge-decaf { background: #2ed573; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .badge-cinnamon { background: #795548; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        /* 🎨 뱃지 색상 강제 지정 */
+        .badge-hot { background: #ff6b6b !important; color: #fff !important; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-iced { background: #339af0 !important; color: #fff !important; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-decaf { background: #2ed573 !important; color: #fff !important; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-cinnamon { background: #795548 !important; color: #fff !important; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
 
         .item-memo-box { 
             background: #fff3cd; 
@@ -122,51 +122,64 @@
         let previousOrderCount = null;
         let cachedOrders = [];
 
-        // 데이터를 읽어 노출 형태 조립 함수
+        const menuMap = {
+            "Espresso": "에스프레소", "Double Espresso (Doppio)": "더블 에스프레소 (도피오)",
+            "Americano": "아메리카노", "Cafe Latte": "카페라떼", "Vanilla Latte": "바닐라라떼", "Cappuccino": "카푸치노",
+            "Chamomile": "카모마일", "Peppermint": "페퍼민트", "Rooibos": "루이보스", "Red Berry": "레드베리",
+            "Green Tea": "녹차", "Earl Grey": "얼그레이", "English Breakfast": "잉글리쉬 블랙퍼스트", "Milk Chocolate": "밀크 초콜릿"
+        };
+
+        // 데이터 파서
         function renderOrderItems(rawMenu) {
             if (!rawMenu) return "";
 
+            let cleanStr = rawMenu.replace(/♪ert\{\}/g, "").replace(/&ert\{\}/g, "");
             let memoText = "";
-            let itemsPart = rawMenu;
 
-            // 요청사항 분리
-            if (rawMenu.includes("[요청사항:")) {
-                const parts = rawMenu.split("[요청사항:");
-                itemsPart = parts[0].trim();
+            if (cleanStr.includes("[요청사항:")) {
+                const parts = cleanStr.split("[요청사항:");
+                cleanStr = parts[0].trim();
+                memoText = parts[1].replace("]", "").trim();
+            } else if (cleanStr.includes("[Requests:")) {
+                const parts = cleanStr.split("[Requests:");
+                cleanStr = parts[0].trim();
                 memoText = parts[1].replace("]", "").trim();
             }
 
             let htmlStr = "";
-            // ' ;; ' 구분자로 개별 품목 분리
-            const items = itemsPart.split(' ;; ');
+            let items = cleanStr.includes(" ;; ") ? cleanStr.split(" ;; ") : cleanStr.split(",");
 
             items.forEach(itemStr => {
-                if (!itemStr.trim()) return;
+                let str = itemStr.trim();
+                if (!str) return;
 
-                // ' | ' 구분자로 세부 데이터 읽기
-                const tokens = itemStr.split(' | ');
-                
-                // 구형 데이터 호환 처리
-                if (tokens.length < 5) {
-                    htmlStr += `<div class="menu-item-row">${itemStr}</div>`;
-                    return;
+                let isHot = str.includes("HOT");
+                let isIced = str.includes("ICED") || str.includes("ICE");
+                let isDecaf = str.includes("디카페인") || str.includes("Decaf");
+                let isCinnamonYes = str.includes("시나몬 O") || str.includes("Cinnamon Yes");
+
+                let qtyMatch = str.match(/(\d+)\s*(잔|cup\(s\)|개)?$/i) \vert{}\vert{} str.match(/\Vert{} (\d+)$/);
+                let qtyNum = qtyMatch ? qtyMatch[1] : "1";
+
+                let name = str;
+                if (str.includes(" | ")) {
+                    const tokens = str.split(" | ");
+                    if (tokens.length >= 2) name = tokens[1];
                 }
 
-                const option = tokens[0].trim();      // HOT or ICED
-                const name = tokens[1].trim();        // 품목명 (한국어)
-                const bean = tokens[2].trim();        // 디카페인 or 빈값
-                const cinnamon = tokens[3].trim();    // 시나몬 O or 빈값
-                const qty = tokens[4].trim();         // 수량
+                // 영어 명칭 번역 및 기호 정리
+                for (let [eng, kor] of Object.entries(menuMap)) {
+                    name = name.replace(new RegExp(eng, 'g'), kor);
+                }
+                name = name.replace(/HOT|ICED|ICE|디카페인|Decaf|시나몬 O|시나몬 X|Cinnamon Yes|Cinnamon No|Regular|일반|none|\||\(\vert{}\)|\d+잔|\d+ cup\(s\)|\*\d+/gi, "").trim();
 
-                // 뱃지 생성
-                let tempBadge = option === "HOT" ? `<span class="badge-hot">HOT</span>` : `<span class="badge-iced">ICED</span>`;
-                let beanBadge = bean ? `<span class="badge-decaf">${bean}</span>` : ``; // 디카페인일 때만 표시
-                let cinnamonBadge = cinnamon ? `<span class="badge-cinnamon">${cinnamon}</span>` : ``;
+                let tempBadge = isHot ? `<span class="badge-hot">HOT</span>` : (isIced ? `<span class="badge-iced">ICED</span>` : "");
+                let beanBadge = isDecaf ? `<span class="badge-decaf">디카페인</span>` : "";
+                let cinnamonBadge = isCinnamonYes ? `<span class="badge-cinnamon">시나몬 O</span>` : "";
 
-                // 요청 순서: [HOT/ICED] [품목명] [원두] [시나몬] *수량
                 htmlStr += `
                     <div class="menu-item-row">
-                        ${tempBadge} <b>${name}</b> ${beanBadge} ${cinnamonBadge} <b>*${qty}</b>
+                        ${tempBadge} <b>${name}</b> ${beanBadge} ${cinnamonBadge} <b>*${qtyNum}</b>
                     </div>
                 `;
             });
