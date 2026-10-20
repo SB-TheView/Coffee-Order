@@ -157,8 +157,13 @@
                 let isDecaf = str.includes("디카페인") || str.includes("Decaf");
                 let isCinnamonYes = str.includes("시나몬 O") || str.includes("Cinnamon Yes");
 
-                let qtyMatch = str.match(/(\d+)\s*(잔|cup\(s\)|개)?$/i) \vert{}\vert{} str.match(/\Vert{} (\d+)$/);
-                let qtyNum = qtyMatch ? qtyMatch[1] : "1";
+                // 수량 추출을 위한 안전한 방식 (오류 원인 완전히 제거)
+                let qtyNum = "1";
+                const matchDigits = str.match(/\d+/g);
+                if (matchDigits && matchDigits.length > 0) {
+                    // 마지막에 나오는 숫자를 수량으로 채택
+                    qtyNum = matchDigits[matchDigits.length - 1];
+                }
 
                 let name = str;
                 if (str.includes(" | ")) {
@@ -169,7 +174,7 @@
                 for (let [eng, kor] of Object.entries(menuMap)) {
                     name = name.replace(new RegExp(eng, 'g'), kor);
                 }
-                name = name.replace(/HOT|ICED|ICE|디카페인|Decaf|시나몬 O|시나몬 X|Cinnamon Yes|Cinnamon No|Regular|일반|none|\||\(\vert{}\)|\d+잔|\d+ cup\(s\)|\*\d+/gi, "").trim();
+                name = name.replace(/HOT|ICED|ICE|디카페인|Decaf|시나몬 O|시나몬 X|Cinnamon Yes|Cinnamon No|Regular|일반|none|\||\(\vert{}\)|\d+잔|\d+ cup\(s\)|\*\d+|\d+/gi, "").trim();
 
                 let tempBadge = isHot ? `<span class="badge-hot">HOT</span>` : (isIced ? `<span class="badge-iced">ICED</span>` : "");
                 let beanBadge = isDecaf ? `<span class="badge-decaf">디카페인</span>` : "";
@@ -351,7 +356,7 @@
                 .catch(err => console.error('상태 전송 실패:', err));
         }
 
-        function restoreOrder(rowIdx) {
+    function restoreOrder(rowIdx) {
             if (confirm("해당 주문을 다시 '접수대기' 상태로 복구하시겠습니까?")) {
                 const servedTimes = getServedTimes();
                 delete servedTimes[rowIdx];
