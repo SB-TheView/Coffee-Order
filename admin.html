@@ -50,7 +50,6 @@
         .history-table th, .history-table td { border: 1px solid #333; padding: 8px; text-align: left; }
         .history-table th { background: #2a2a2a; }
         
-        /* 복구 버튼 스타일 */
         .btn-restore { background: #e67e22; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-restore:hover { background: #d35400; }
     </style>
@@ -114,16 +113,33 @@
             } catch (e) {}
         }
 
-        // 시트 타임스탬프를 정확한 로컬 시간(시:분:초)으로 파싱하는 함수
+        // ISO 타임스탬프 또는 날짜 문자열을 보기 쉬운 로컬 형식으로 변환하는 함수
+        function formatDateTime(timestampStr) {
+            if (!timestampStr) return "";
+            try {
+                const date = new Date(timestampStr);
+                if (!isNaN(date.getTime())) {
+                    // YYYY-MM-DD HH:mm:ss 형태로 보기 좋게 변환
+                    const yyyy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    const hh = String(date.getHours()).padStart(2, '0');
+                    const min = String(date.getMinutes()).padStart(2, '0');
+                    const ss = String(date.getSeconds()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+                }
+            } catch (e) {}
+            return timestampStr;
+        }
+
         function formatTime(timestampStr) {
             if (!timestampStr) return "";
             try {
                 const date = new Date(timestampStr);
                 if (!isNaN(date.getTime())) {
-                    return date.toTimeString().substring(0, 8); // HH:mm:ss 추출
+                    return date.toTimeString().substring(0, 8);
                 }
             } catch (e) {}
-            // 파싱 실패 시 기존 문자열 뒤쪽 추출 시도
             return timestampStr.length >= 19 ? timestampStr.substring(11, 19) : timestampStr;
         }
 
@@ -203,7 +219,6 @@
             });
         }
 
-        // 낙관적 UI 업데이트 (더블클릭 상태 전환)
         function handleCardDblClick(rowIdx, currentStatus) {
             let nextStatus = '';
             if (currentStatus === '접수대기' || !currentStatus) {
@@ -233,16 +248,13 @@
                 .catch(err => console.error('상태 전송 실패:', err));
         }
 
-        // 주문 복구 기능 (히스토리 창에서 실행)
         function restoreOrder(rowIdx) {
             if (confirm("해당 주문을 다시 '접수대기' 상태로 복구하시겠습니까?")) {
-                // 타이머 리셋
                 delete servedTimers[rowIdx];
 
                 const target = cachedOrders.find(o => o.row === rowIdx);
                 if (target) target.status = '접수대기';
 
-                // 화면 갱신 및 모달 닫기
                 const activeOrders = cachedOrders.filter(order => {
                     if (order.status === "제공완료" && servedTimers[order.row] === "EXPIRED") {
                         return false;
@@ -252,7 +264,6 @@
                 renderDashboard(activeOrders);
                 closeHistoryModal();
 
-                // 서버 반영
                 fetch(`${GAS_URL}?action=updateStatus&row=${rowIdx}&status=접수대기`)
                     .then(response => response.json())
                     .catch(err => console.error('복구 전송 실패:', err));
@@ -264,7 +275,7 @@
             setTimeout(() => {
                 servedTimers[rowIdx] = "EXPIRED";
                 const activeOrders = cachedOrders.filter(order => {
-                    if (order.status === "제공완료" && servedTimers[order.row] === "EXPIRED") {
+                    if (order.status === "제공완료" && servedTimers[rowIdx] === "EXPIRED") {
                         return false;
                     }
                     return true;
@@ -280,9 +291,10 @@
             const sortedHistory = [...cachedOrders].reverse();
 
             sortedHistory.forEach(order => {
+                const cleanDateTime = formatDateTime(order.timestamp); // 보기 좋은 날짜/시간으로 파싱
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${order.timestamp}</td>
+                    <td>${cleanDateTime}</td>
                     <td><b>${order.tableNo}</b></td>
                     <td>${order.menu}</td>
                     <td><span style="color: ${order.status === '제공완료' ? '#1e90ff' : (order.status === '제조완료' ? '#2ed573' : '#ffa502')}">${order.status}</span></td>
