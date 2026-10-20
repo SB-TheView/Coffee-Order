@@ -5,73 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE VIEW - 바리스타 대시보드</title>
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #121212; color: #fff; user-select: none; }
+        /* 화이트 톤앤매너 배경 및 폰트 설정 */
+        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #f4f6f9; color: #333; user-select: none; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        h1 { margin: 0; color: #f8f9fa; font-size: 24px; }
-        .sub-guide { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; }
+        h1 { margin: 0; color: #1a1a1a; font-size: 24px; }
+        .sub-guide { text-align: center; color: #666; font-size: 13px; margin-bottom: 20px; }
         
-        .btn-history { background: #333; color: #fff; border: 1px solid #555; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .btn-history:hover { background: #444; }
+        .btn-history { background: #fff; color: #333; border: 1px solid #ccc; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-history:hover { background: #e9ecef; }
 
-        /* 카드 가로 폭을 넓게 조정하여 텍스트가 가로로 길게 배치되도록 설정 */
+        /* 주문 카드 그리드 배열 */
         .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 15px; }
         
+        /* 기본 카드 (접수대기 상태: 화이트 배경에 깔끔한 테두리) */
         .order-card { 
-            background: #1e1e1e; 
-            border: 2px solid #333; 
+            background: #ffffff; 
+            border: 2px solid #e2e8f0; 
             border-radius: 12px; 
             padding: 16px; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
             cursor: pointer; 
-            transition: background 0.15s ease, border-color 0.15s ease; 
+            transition: all 0.15s ease; 
         }
         
-        .order-card.status-making { background: #0f381e !important; border-color: #2ed573 !important; }
-        .order-card.status-making .status-badge { background-color: #2ed573; color: #000; }
+        /* 제조완료 상태 (은은한 연두빛 배경) */
+        .order-card.status-making { background: #e6f4ea !important; border-color: #34a853 !important; }
+        .order-card.status-making .status-badge { background-color: #34a853; color: #fff; }
 
-        .order-card.status-served { background: #0d2a4a !important; border-color: #1e90ff !important; opacity: 0.85; }
-        .order-card.status-served .status-badge { background-color: #1e90ff; color: #fff; }
+        /* 제공완료 상태 (은은한 하늘빛 배경 및 투명도) */
+        .order-card.status-served { background: #e8f0fe !important; border-color: #1a73e8 !important; opacity: 0.8; }
+        .order-card.status-served .status-badge { background-color: #1a73e8; color: #fff; }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .table-badge { background: #ff4757; color: white; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 15px; }
-        .status-badge { background: #444; color: #ccc; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .status-badge { background: #6c757d; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
 
         .menu-list-box { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         
-        /* 메뉴 아이템 한 줄 가로 출력 및 줄바꿈 방지 */
+        /* 개별 주문 항목 행 */
         .menu-item-row { 
             font-size: 15px; 
             font-weight: bold; 
-            color: #ffa502; 
-            background: rgba(255,255,255,0.05); 
+            color: #222; 
+            background: #f8f9fa; 
+            border: 1px solid #e9ecef;
             padding: 10px 12px; 
             border-radius: 6px; 
             white-space: nowrap; 
             overflow-x: auto; 
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        /* 품목명 바로 아래에 위치하는 개별 요청사항 박스 */
+        /* 🎨 요청하신 항목별 가시성 컬러 뱃지 시스템 */
+        .badge-hot { background: #ff6b6b; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-iced { background: #339af0; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-decaf { background: #2ed573; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-cinnamon { background: #795548; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+
+        /* 고객 요청사항 메모 강조 박스 (눈에 띄는 노란 배경) */
         .item-memo-box { 
-            background: rgba(255, 193, 7, 0.2); 
-            border-left: 3px solid #ffc107; 
-            color: #ffecb3; 
-            padding: 6px 10px; 
+            background: #fff3cd; 
+            border-left: 4px solid #ffc107; 
+            color: #856404; 
+            padding: 8px 10px; 
             border-radius: 4px; 
-            font-size: 12px; 
+            font-size: 13px; 
             margin-top: 4px; 
-            font-weight: normal;
+            font-weight: 500;
         }
 
-        .time-text { font-size: 12px; color: #aaa; text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
-        .no-order { text-align: center; color: #666; grid-column: 1 / -1; margin-top: 50px; font-size: 18px; }
+        .time-text { font-size: 12px; color: #666; text-align: right; border-top: 1px solid #eee; padding-top: 8px; }
+        .no-order { text-align: center; color: #888; grid-column: 1 / -1; margin-top: 50px; font-size: 18px; }
 
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
-        .modal-content { background-color: #1e1e1e; margin: 5% auto; padding: 20px; border: 1px solid #444; width: 85%; max-width: 700px; border-radius: 12px; max-height: 80vh; overflow-y: auto; color: #fff; }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 20px; border: 1px solid #ccc; width: 85%; max-width: 700px; border-radius: 12px; max-height: 80vh; overflow-y: auto; color: #333; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .close-modal:hover { color: #fff; }
+        .close-modal:hover { color: #000; }
         .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-        .history-table th, .history-table td { border: 1px solid #333; padding: 8px; text-align: left; }
-        .history-table th { background: #2a2a2a; }
+        .history-table th, .history-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .history-table th { background: #f8f9fa; }
         
         .btn-restore { background: #e67e22; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-restore:hover { background: #d35400; }
@@ -83,7 +97,7 @@
         <h1>THE VIEW 실시간 주문 대시보드</h1>
         <button class="btn-history" onclick="openHistoryModal()">주문 히스토리 보기</button>
     </div>
-    <div class="sub-guide">카드를 더블클릭(2번 터치)하면 [제조완료(초록)] ➔ [제공완료(파랑, 30초 후 숨김)]로 즉시 전환됩니다.</div>
+    <div class="sub-guide">카드를 더블클릭(2번 터치)하면 [제조완료(연두)] ➔ [제공완료(하늘, 30초 후 숨김)]로 즉시 전환됩니다.</div>
 
     <div id="order-list" class="order-container">
         <div class="no-order">주문 데이터를 불러오는 중...</div>
@@ -115,42 +129,73 @@
         let previousOrderCount = null;
         let cachedOrders = [];
 
-        // 영문 메뉴명/옵션을 한국어로 완벽하게 변환하는 매핑 사전 (실무 직관성 확보)
-        function translateToKorean(rawText) {
+        // 영문 및 기존 텍스트를 파싱하여 요청하신 순서와 컬러 배지로 재구성하는 함수
+        function formatMenuDisplay(rawText) {
             if (!rawText) return "";
-            let text = rawText;
-
-            // 메뉴명 매핑
-            const menuMap = {
-                "Espresso": "에스프레소",
-                "Double Espresso (Doppio)": "더블 에스프레소 (도피오)",
-                "Americano": "아메리카노",
-                "Cafe Latte": "카페라떼",
-                "Vanilla Latte": "바닐라라떼",
-                "Cappuccino": "카푸치노",
-                "Chamomile": "카모마일",
-                "Peppermint": "페퍼민트",
-                "Rooibos": "루이보스",
-                "Red Berry": "레드베리",
-                "Green Tea": "녹차",
-                "Earl Grey": "얼그레이",
-                "English Breakfast": "잉글리쉬 블랙퍼스트",
-                "Milk Chocolate": "밀크 초콜릿"
-            };
-
-            for (let [eng, kor] of Object.entries(menuMap)) {
-                text = text.replace(new RegExp(eng, 'g'), kor);
+            
+            // 전역 요청사항 분리
+            let globalMemo = "";
+            let itemsText = rawText;
+            if (rawText.includes("요청사항:")) {
+                const parts = rawText.split("요청사항:");
+                itemsText = parts[0].trim();
+                globalMemo = parts[1].replace(/\[\vert{}\]/g, "").trim();
             }
 
-            // 옵션 매핑
-            text = text.replace(/Decaf/g, "디카페인")
-                       .replace(/Regular/g, "일반")
-                       .replace(/Cinnamon Yes/g, "시나몬 O")
-                       .replace(/Cinnamon No/g, "시나몬 X")
-                       .replace(/cup\(s\)/g, "잔")
-                       .replace(/Requests:/g, "요청사항:");
+            // 개별 메뉴 항목 파싱 (쉼표 기준 분리)
+            const itemChunks = itemsText.split(',');
+            let htmlOutput = "";
 
-            return text;
+            itemChunks.forEach(chunk => {
+                let text = chunk.trim();
+                if (!text) return;
+
+                // 1. 영어 명칭 -> 한국어 번역
+                const menuMap = {
+                    "Espresso": "에스프레소", "Double Espresso (Doppio)": "더블 에스프레소 (도피오)",
+                    "Americano": "아메리카노", "Cafe Latte": "카페라떼", "Vanilla Latte": "바닐라라떼", "Cappuccino": "카푸치노",
+                    "Chamomile": "카모마일", "Peppermint": "페퍼민트", "Rooibos": "루이보스", "Red Berry": "레드베리",
+                    "Green Tea": "녹차", "Earl Grey": "얼그레이", "English Breakfast": "잉글리쉬 블랙퍼스트", "Milk Chocolate": "밀크 초콜릿"
+                };
+                for (let [eng, kor] of Object.entries(menuMap)) {
+                    text = text.replace(new RegExp(eng, 'g'), kor);
+                }
+
+                // 2. 옵션 및 수량 추출 변수
+                let isHot = text.includes("HOT");
+                let isIced = text.includes("ICED") || text.includes("ICE");
+                let isDecaf = text.includes("디카페인") || text.includes("Decaf");
+                let isCinnamonYes = text.includes("시나몬 O") || text.includes("Cinnamon Yes");
+                let isCinnamonNo = text.includes("시나몬 X") || text.includes("Cinnamon No");
+
+                // 수량 추출 (예: "1잔", "1 cup(s)")
+                let qtyMatch = text.match(/(\d+)(잔|cup\(s\))/);
+                let qtyNum = qtyMatch ? qtyMatch[1] : "1";
+
+                // 순서 재구성: [HOT/ICED] [품목명] [원두] [시나몬여부] *개수
+                // 품목 이름만 남기기 위해 옵션 단어들 제거 후 정리
+                let cleanName = text
+                    .replace(/HOT|ICED|ICE|디카페인|Decaf|시나몬 O|시나몬 X|Cinnamon Yes|Cinnamon No|Regular|일반|,|\(\vert{}\)|\d+잔|\d+ cup\(s\)/g, "")
+                    .trim();
+
+                // 뱃지 HTML 생성
+                let tempBadge = isHot ? `<span class="badge-hot">HOT</span>` : (isIced ? `<span class="badge-iced">ICED</span>` : "");
+                let decafBadge = isDecaf ? `<span class="badge-decaf">디카페인</span>` : ""; // 디카페인인 경우에만 노출
+                let cinnamonBadge = isCinnamonYes ? `<span class="badge-cinnamon">시나몬 O</span>` : (isCinnamonNo ? `<span class="badge-cinnamon" style="background:#555;">시나몬 X</span>` : "");
+
+                // 최종 한 줄 조합 (요청하신 순서 반영)
+                htmlOutput += `
+                    <div class="menu-item-row">
+                        ${tempBadge} <b>${cleanName}</b> ${decafBadge} ${cinnamonBadge} <b>*${qtyNum}</b>
+                    </div>
+                `;
+            });
+
+            if (globalMemo) {
+                htmlOutput += `<div class="item-memo-box"><b>요청사항:</b> ${globalMemo}</div>`;
+            }
+
+            return htmlOutput;
         }
 
         function getServedTimes() {
@@ -261,37 +306,7 @@
                 card.id = `card-${order.row}`;
                 card.setAttribute('ondblclick', `handleCardDblClick(${order.row}, '${order.status}')`);
 
-                // 전체 메뉴 텍스트를 한국어로 강제 변환
-                const translatedMenu = translateToKorean(order.menu || "");
-
-                // 품목별 줄바꿈 및 개별 요청사항(메모) 분리 파싱
-                let menuHtml = '';
-                let globalMemo = "";
-
-                if (translatedMenu.includes("요청사항:")) {
-                    const parts = translatedMenu.split("요청사항:");
-                    const itemsPart = parts[0].trim();
-                    globalMemo = parts[1].replace(/\[\vert{}\]/g, "").trim();
-
-                    itemsPart.split(',').forEach(item => {
-                        const cleanItem = item.trim();
-                        if (cleanItem) {
-                            menuHtml += `<div class="menu-item-row">${cleanItem}</div>`;
-                        }
-                    });
-
-                    if (globalMemo) {
-                        menuHtml += `<div class="item-memo-box"><b>요청사항:</b> ${globalMemo}</div>`;
-                    }
-                } else {
-                    translatedMenu.split(',').forEach(item => {
-                        const cleanItem = item.trim();
-                        if (cleanItem) {
-                            menuHtml += `<div class="menu-item-row">${cleanItem}</div>`;
-                        }
-                    });
-                }
-
+                const formattedMenuHtml = formatMenuDisplay(order.menu || "");
                 const cleanTime = formatTime(order.timestamp);
 
                 card.innerHTML = `
@@ -300,7 +315,7 @@
                             <span class="table-badge">테이블: ${order.tableNo}</span>
                             <span class="status-badge">${statusLabel}</span>
                         </div>
-                        <div class="menu-list-box">${menuHtml}</div>
+                        <div class="menu-list-box">${formattedMenuHtml}</div>
                     </div>
                     <div class="time-text">${cleanTime} 접수</div>
                 `;
@@ -357,13 +372,12 @@
 
             [...cachedOrders].reverse().forEach(order => {
                 const cleanDateTime = formatDateTime(order.timestamp);
-                const translatedMenu = translateToKorean(order.menu || "");
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${cleanDateTime}</td>
                     <td><b>${order.tableNo}</b></td>
-                    <td>${translatedMenu}</td>
-                    <td><span style="color: ${order.status === '제공완료' ? '#1e90ff' : (order.status === '제조완료' ? '#2ed573' : '#ffa502')}">${order.status}</span></td>
+                    <td>${order.menu}</td>
+                    <td><span style="color: ${order.status === '제공완료' ? '#1a73e8' : (order.status === '제조완료' ? '#34a853' : '#e67e22')}">${order.status}</span></td>
                     <td><button class="btn-restore" onclick="restoreOrder(${order.row})">복구</button></td>
                 `;
                 tbody.appendChild(tr);
