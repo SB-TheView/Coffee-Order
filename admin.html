@@ -6,12 +6,15 @@
     <title>THE VIEW - 바리스타 대시보드</title>
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #121212; color: #fff; user-select: none; }
-        h1 { text-align: center; color: #f8f9fa; margin-bottom: 10px; }
-        .sub-guide { text-align: center; color: #888; font-size: 13px; margin-bottom: 25px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        h1 { margin: 0; color: #f8f9fa; font-size: 24px; }
+        .sub-guide { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; }
         
+        .btn-history { background: #333; color: #fff; border: 1px solid #555; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn-history:hover { background: #444; }
+
         .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
         
-        /* 기본 카드 (접수대기) */
         .order-card { 
             background: #1e1e1e; 
             border: 2px solid #333; 
@@ -19,29 +22,14 @@
             padding: 16px; 
             box-shadow: 0 4px 8px rgba(0,0,0,0.4); 
             cursor: pointer; 
-            transition: all 0.3s ease; 
+            transition: background 0.15s ease, border-color 0.15s ease; 
         }
         
-        /* 2단계: 제조완료 (초록색 음영) */
-        .order-card.status-making { 
-            background: #0f381e !important; 
-            border-color: #2ed573 !important; 
-        }
-        .order-card.status-making .status-badge {
-            background-color: #2ed573;
-            color: #000;
-        }
+        .order-card.status-making { background: #0f381e !important; border-color: #2ed573 !important; }
+        .order-card.status-making .status-badge { background-color: #2ed573; color: #000; }
 
-        /* 3단계: 제공완료 (파란색 음영) */
-        .order-card.status-served { 
-            background: #0d2a4a !important; 
-            border-color: #1e90ff !important; 
-            opacity: 0.85;
-        }
-        .order-card.status-served .status-badge {
-            background-color: #1e90ff;
-            color: #fff;
-        }
+        .order-card.status-served { background: #0d2a4a !important; border-color: #1e90ff !important; opacity: 0.85; }
+        .order-card.status-served .status-badge { background-color: #1e90ff; color: #fff; }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .table-badge { background: #ff4757; color: white; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 15px; }
@@ -52,55 +40,99 @@
 
         .time-text { font-size: 12px; color: #aaa; text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
         .no-order { text-align: center; color: #666; grid-column: 1 / -1; margin-top: 50px; font-size: 18px; }
+
+        /* 모달 창 스타일 */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+        .modal-content { background-color: #1e1e1e; margin: 5% auto; padding: 20px; border: 1px solid #444; width: 85%; max-width: 650px; border-radius: 12px; max-height: 80vh; overflow-y: auto; color: #fff; }
+        .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-modal:hover { color: #fff; }
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        .history-table th, .history-table td { border: 1px solid #333; padding: 8px; text-align: left; }
+        .history-table th { background: #2a2a2a; }
+        
+        /* 복구 버튼 스타일 */
+        .btn-restore { background: #e67e22; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .btn-restore:hover { background: #d35400; }
     </style>
 </head>
 <body>
 
-    <h1>☕ THE VIEW 실시간 주문 대시보드</h1>
-    <div class="sub-guide">💡 카드를 <b>더블클릭(2번 터치)</b>하면 [제조완료(초록)] ➔ [제공완료(파랑, 30초 후 삭제)]로 변경됩니다.</div>
+    <div class="top-bar">
+        <h1>☕ THE VIEW 실시간 주문 대시보드</h1>
+        <button class="btn-history" onclick="openHistoryModal()">📋 주문 히스토리 보기</button>
+    </div>
+    <div class="sub-guide">💡 카드를 <b>더블클릭(2번 터치)</b>하면 [제조완료(초록)] ➔ [제공완료(파랑, 30초 후 숨김)]로 즉시 전환됩니다.</div>
 
     <div id="order-list" class="order-container">
         <div class="no-order">주문 데이터를 불러오는 중...</div>
     </div>
 
+    <!-- 히스토리 모달 창 -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeHistoryModal()">&times;</span>
+            <h2>📋 전체 주문 히스토리 및 복구</h2>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>접수시간</th>
+                        <th>테이블</th>
+                        <th>메뉴 내역</th>
+                        <th>상태</th>
+                        <th>관리</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <!-- 데이터 동적 삽입 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
         // ⚠️ 구글 앱스 스크립트 웹 앱 URL을 입력하세요!
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwU72rusi39-uhe-v6ukfqNHOX39tPzpf8Fp23QpNAlQJ1rpe_ZtOrzkr7dS4NNbeKlYQ/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzFII67V5lEWlEOMH9x9Ao8PnQUhk4Z9KZJ2x0PB-5GPa8XHKhTqDa8htVK2X-rhbrKVw/exec";
 
-        let previousOrderCount = 0;
-        let servedTimers = {}; // 제공완료 30초 소멸 타이머 관리
+        let previousOrderCount = null;
+        let servedTimers = {}; 
+        let cachedOrders = [];
 
-        // 딩동 알림 소리 재생 함수 (Web Audio API)
         function playNotificationSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5
-
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15);
                 gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.6);
-            } catch (e) {
-                console.log("오디오 재생 실패:", e);
-            }
+            } catch (e) {}
+        }
+
+        // 시트 타임스탬프를 정확한 로컬 시간(시:분:초)으로 파싱하는 함수
+        function formatTime(timestampStr) {
+            if (!timestampStr) return "";
+            try {
+                const date = new Date(timestampStr);
+                if (!isNaN(date.getTime())) {
+                    return date.toTimeString().substring(0, 8); // HH:mm:ss 추출
+                }
+            } catch (e) {}
+            // 파싱 실패 시 기존 문자열 뒤쪽 추출 시도
+            return timestampStr.length >= 19 ? timestampStr.substring(11, 19) : timestampStr;
         }
 
         function fetchOrders() {
             fetch(GAS_URL)
                 .then(response => response.json())
                 .then(data => {
-                    const orderListEl = document.getElementById('order-list');
+                    cachedOrders = data;
                     
-                    // 제공완료 후 30초 지나 삭제된 건을 제외한 활성 주문 필터링
                     const activeOrders = data.filter(order => {
                         if (order.status === "제공완료" && servedTimers[order.row] === "EXPIRED") {
                             return false;
@@ -108,66 +140,70 @@
                         return true;
                     });
 
-                    // 신규 주문 감지 시 효과음 재생
                     const currentPendingCount = activeOrders.filter(o => o.status === "접수대기").length;
                     if (previousOrderCount !== null && currentPendingCount > previousOrderCount) {
                         playNotificationSound();
                     }
                     previousOrderCount = currentPendingCount;
 
-                    orderListEl.innerHTML = '';
-
-                    if (activeOrders.length === 0) {
-                        orderListEl.innerHTML = '<div class="no-order">현재 대기 중인 주문이 없습니다.</div>';
-                        return;
-                    }
-
-                    activeOrders.reverse().forEach(order => {
-                        const card = document.createElement('div');
-                        let statusClass = '';
-                        let statusLabel = '접수대기';
-
-                        if (order.status === '제조완료') {
-                            statusClass = 'status-making';
-                            statusLabel = '제조완료';
-                        } else if (order.status === '제공완료') {
-                            statusClass = 'status-served';
-                            statusLabel = '제공완료 (30초 후 삭제)';
-                            
-                            // 제공완료 상태인데 타이머가 없으면 30초 카운트다운 시작
-                            if (!servedTimers[order.row]) {
-                                startServedTimer(order.row);
-                            }
-                        }
-
-                        card.className = `order-card ${statusClass}`;
-                        card.setAttribute('ondblclick', `handleCardDblClick(${order.row}, '${order.status}')`);
-
-                        let menuHtml = '';
-                        if (order.menu) {
-                            const menuItems = order.menu.split(',');
-                            menuItems.forEach(item => {
-                                menuHtml += `<div class="menu-item">${item.trim()}</div>`;
-                            });
-                        }
-
-                        card.innerHTML = `
-                            <div>
-                                <div class="card-header">
-                                    <span class="table-badge">테이블: ${order.tableNo}</span>
-                                    <span class="status-badge">${statusLabel}</span>
-                                </div>
-                                <div class="menu-list-box">${menuHtml}</div>
-                            </div>
-                            <div class="time-text">${order.timestamp.substring(11, 19)} 접수</div>
-                        `;
-                        orderListEl.appendChild(card);
-                    });
+                    renderDashboard(activeOrders);
                 })
-                .catch(err => console.error('주문 데이터 로드 실패:', err));
+                .catch(err => console.error('데이터 로드 실패:', err));
         }
 
-        // 더블 클릭 시 상태 전환
+        function renderDashboard(orders) {
+            const orderListEl = document.getElementById('order-list');
+            orderListEl.innerHTML = '';
+
+            if (orders.length === 0) {
+                orderListEl.innerHTML = '<div class="no-order">현재 대기 중인 주문이 없습니다.</div>';
+                return;
+            }
+
+            orders.reverse().forEach(order => {
+                const card = document.createElement('div');
+                let statusClass = '';
+                let statusLabel = '접수대기';
+
+                if (order.status === '제조완료') {
+                    statusClass = 'status-making';
+                    statusLabel = '제조완료';
+                } else if (order.status === '제공완료') {
+                    statusClass = 'status-served';
+                    statusLabel = '제공완료 (30초 후 숨김)';
+                    if (!servedTimers[order.row]) {
+                        startServedTimer(order.row);
+                    }
+                }
+
+                card.className = `order-card ${statusClass}`;
+                card.id = `card-${order.row}`;
+                card.setAttribute('ondblclick', `handleCardDblClick(${order.row}, '${order.status}')`);
+
+                let menuHtml = '';
+                if (order.menu) {
+                    order.menu.split(',').forEach(item => {
+                        menuHtml += `<div class="menu-item">${item.trim()}</div>`;
+                    });
+                }
+
+                const cleanTime = formatTime(order.timestamp);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="card-header">
+                            <span class="table-badge">테이블: ${order.tableNo}</span>
+                            <span class="status-badge">${statusLabel}</span>
+                        </div>
+                        <div class="menu-list-box">${menuHtml}</div>
+                    </div>
+                    <div class="time-text">${cleanTime} 접수</div>
+                `;
+                orderListEl.appendChild(card);
+            });
+        }
+
+        // 낙관적 UI 업데이트 (더블클릭 상태 전환)
         function handleCardDblClick(rowIdx, currentStatus) {
             let nextStatus = '';
             if (currentStatus === '접수대기' || !currentStatus) {
@@ -175,31 +211,100 @@
             } else if (currentStatus === '제조완료') {
                 nextStatus = '제공완료';
             } else {
-                return; // 제공완료 상태에서는 더 이상 클릭 처리 안 함
+                return;
+            }
+
+            const cardEl = document.getElementById(`card-${rowIdx}`);
+            if (cardEl) {
+                cardEl.className = `order-card ${nextStatus === '제조완료' ? 'status-making' : 'status-served'}`;
+                cardEl.querySelector('.status-badge').innerText = nextStatus === '제조완료' ? '제조완료' : '제공완료 (30초 후 숨김)';
+                cardEl.setAttribute('ondblclick', `handleCardDblClick(${rowIdx}, '${nextStatus}')`);
+            }
+
+            const target = cachedOrders.find(o => o.row === rowIdx);
+            if (target) target.status = nextStatus;
+
+            if (nextStatus === '제공완료') {
+                startServedTimer(rowIdx);
             }
 
             fetch(`${GAS_URL}?action=updateStatus&row=${rowIdx}&status=${encodeURIComponent(nextStatus)}`)
                 .then(response => response.json())
-                .then(res => {
-                    if (res.status === "success") {
-                        if (nextStatus === '제공완료') {
-                            startServedTimer(rowIdx);
-                        }
-                        fetchOrders();
-                    }
-                });
+                .catch(err => console.error('상태 전송 실패:', err));
         }
 
-        // 제공완료 30초 후 화면에서 삭제 처리하는 타이머
+        // 주문 복구 기능 (히스토리 창에서 실행)
+        function restoreOrder(rowIdx) {
+            if (confirm("해당 주문을 다시 '접수대기' 상태로 복구하시겠습니까?")) {
+                // 타이머 리셋
+                delete servedTimers[rowIdx];
+
+                const target = cachedOrders.find(o => o.row === rowIdx);
+                if (target) target.status = '접수대기';
+
+                // 화면 갱신 및 모달 닫기
+                const activeOrders = cachedOrders.filter(order => {
+                    if (order.status === "제공완료" && servedTimers[order.row] === "EXPIRED") {
+                        return false;
+                    }
+                    return true;
+                });
+                renderDashboard(activeOrders);
+                closeHistoryModal();
+
+                // 서버 반영
+                fetch(`${GAS_URL}?action=updateStatus&row=${rowIdx}&status=접수대기`)
+                    .then(response => response.json())
+                    .catch(err => console.error('복구 전송 실패:', err));
+            }
+        }
+
         function startServedTimer(rowIdx) {
             servedTimers[rowIdx] = "RUNNING";
             setTimeout(() => {
                 servedTimers[rowIdx] = "EXPIRED";
-                fetchOrders(); // 30초 후 화면 재갱신하여 카드 제거
-            }, 30000); // 30초 (30000ms)
+                const activeOrders = cachedOrders.filter(order => {
+                    if (order.status === "제공완료" && servedTimers[order.row] === "EXPIRED") {
+                        return false;
+                    }
+                    return true;
+                });
+                renderDashboard(activeOrders);
+            }, 30000);
         }
 
-        // 5초마다 자동 새로고침
+        function openHistoryModal() {
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '';
+
+            const sortedHistory = [...cachedOrders].reverse();
+
+            sortedHistory.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${order.timestamp}</td>
+                    <td><b>${order.tableNo}</b></td>
+                    <td>${order.menu}</td>
+                    <td><span style="color: ${order.status === '제공완료' ? '#1e90ff' : (order.status === '제조완료' ? '#2ed573' : '#ffa502')}">${order.status}</span></td>
+                    <td><button class="btn-restore" onclick="restoreOrder(${order.row})">복구</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('historyModal').style.display = 'block';
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('historyModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
         fetchOrders();
         setInterval(fetchOrders, 5000);
     </script>
