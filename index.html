@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>커피 주문 시스템</title>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }
+        .container { max-width: 480px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .table-badge { display: inline-block; background: #007bff; color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; margin-top: 8px; }
+        .menu-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; margin-bottom: 12px; }
+        .menu-name { font-size: 16px; font-weight: bold; color: #333; }
+        .btn-order { background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-order:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h2>☕ 뷔페 모바일 커피 오더</h2>
+            <div id="table-display" class="table-badge">테이블 확인 중...</div>
+        </div>
+
+        <div id="menu-list">
+            <div class="menu-card">
+                <span class="menu-name">아메리카노 (HOT)</span>
+                <button class="btn-order" onclick="submitOrder('아메리카노 (HOT)')">주문하기</button>
+            </div>
+            <div class="menu-card">
+                <span class="menu-name">카페라떼 (ICE)</span>
+                <button class="btn-order" onclick="submitOrder('카페라떼 (ICE)')">주문하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. URL 파라미터에서 테이블 번호 추출 (예: ?table=A1A)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tableNo = urlParams.get('table') || '미지정';
+
+        // 2. 화면 배지에 테이블 번호 표시
+        document.getElementById('table-display').innerText = `테이블 번호: ${tableNo}`;
+
+        // 3. 주문 제출 함수 (다음 단계에서 구글 시트 API 연동 예정)
+        function submitOrder(menuName) {
+            if (tableNo === '미지정') {
+                alert('테이블 정보가 없습니다. QR 코드를 다시 스캔해 주세요.');
+                return;
+            }
+
+            if (confirm(`[${tableNo}]번 테이블\n'${menuName}' 주문을 전송하시겠습니까?`)) {
+                // 구글 앱스 스크립트(GAS) 연동 코드가 들어갈 자리입니다.
+                alert('주문이 접수되었습니다!');
+            }
+        }
+    </script>
+
+</body>
+</html>
