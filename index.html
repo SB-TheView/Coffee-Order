@@ -6,7 +6,7 @@
     <title>THE VIEW Coffee-Order</title>
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }
-        .container { max-width: 480px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; }
+        .container { max-width: 480px; margin: 0 auto; background: #ffffff; padding: 20px 20px 80px 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; }
         
         /* 언어 선택 스위치 (우측 상단) */
         .lang-switch { position: absolute; top: 15px; right: 15px; display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; font-size: 12px; font-weight: bold; }
@@ -25,13 +25,16 @@
         .menu-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid #eee; }
         .menu-name { font-size: 16px; font-weight: bold; color: #333; flex: 1; }
         
-        /* 수량 조절 및 주문 버튼 영역 */
-        .order-controls { display: flex; align-items: center; gap: 8px; }
-        .btn-qty { background: #e9ecef; border: 1px solid #ced4da; width: 32px; height: 32px; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        /* 수량 조절 영역 */
+        .order-controls { display: flex; align-items: center; gap: 10px; }
+        .btn-qty { background: #e9ecef; border: 1px solid #ced4da; width: 34px; height: 34px; border-radius: 6px; font-weight: bold; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-qty:active { background: #dee2e6; }
         .qty-val { font-size: 16px; font-weight: bold; width: 24px; text-align: center; }
-        .btn-order { background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .btn-order:hover { background-color: #218838; }
+
+        /* 하단 고정 주문하기 버튼 영역 */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #ddd; padding: 12px 20px; display: flex; justify-content: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .btn-submit-all { max-width: 480px; width: 100%; background-color: #28a745; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; }
+        .btn-submit-all:hover { background-color: #218838; }
         
         .loading { display: none; text-align: center; color: #007bff; margin-top: 15px; font-weight: bold; font-size: 14px; }
     </style>
@@ -55,24 +58,22 @@
 
         <div id="menu-list">
             <!-- 메뉴 1: 아메리카노 (HOT) -->
-            <div class="menu-card">
-                <span class="menu-name" data-menu-kor="아메리카노 (HOT)" data-menu-eng="Americano (HOT)">아메리카노 (HOT)</span>
+            <div class="menu-card" data-menu-kor="아메리카노 (HOT)" data-menu-eng="Americano (HOT)">
+                <span class="menu-name">아메리카노 (HOT)</span>
                 <div class="order-controls">
-                    <button class="btn-qty" onclick="changeQty('qty-1', -1)">-</button>
-                    <span id="qty-1" class="qty-val">1</span>
-                    <button class="btn-qty" onclick="changeQty('qty-1', 1)">+</button>
-                    <button class="btn-order" onclick="submitOrder(this, 'qty-1')">주문하기</button>
+                    <button class="btn-qty" onclick="changeQty(this, -1)">-</button>
+                    <span class="qty-val">0</span>
+                    <button class="btn-qty" onclick="changeQty(this, 1)">+</button>
                 </div>
             </div>
 
             <!-- 메뉴 2: 카페라떼 (ICE) -->
-            <div class="menu-card">
-                <span class="menu-name" data-menu-kor="카페라떼 (ICE)" data-menu-eng="Cafe Latte (ICE)">카페라떼 (ICE)</span>
+            <div class="menu-card" data-menu-kor="카페라떼 (ICE)" data-menu-eng="Cafe Latte (ICE)">
+                <span class="menu-name">카페라떼 (ICE)</span>
                 <div class="order-controls">
-                    <button class="btn-qty" onclick="changeQty('qty-2', -1)">-</button>
-                    <span id="qty-2" class="qty-val">1</span>
-                    <button class="btn-qty" onclick="changeQty('qty-2', 1)">+</button>
-                    <button class="btn-order" onclick="submitOrder(this, 'qty-2')">주문하기</button>
+                    <button class="btn-qty" onclick="changeQty(this, -1)">-</button>
+                    <span class="qty-val">0</span>
+                    <button class="btn-qty" onclick="changeQty(this, 1)">+</button>
                 </div>
             </div>
         </div>
@@ -80,98 +81,103 @@
         <div id="loading-text" class="loading">주문을 전송 중입니다... 잠시만 기다려주세요.</div>
     </div>
 
+    <!-- 하단 일괄 주문하기 버튼 -->
+    <div class="bottom-bar">
+        <button id="btn-submit-all" class="btn-submit-all" onclick="submitCartOrder()">주문하기</button>
+    </div>
+
     <script>
         // ⚠️ 구글 앱스 스크립트 웹 앱 URL을 입력하세요!
         const GAS_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
-        // 현재 언어 상태 (기본값: kor)
         let currentLang = 'kor';
 
-        // 언어별 다국어 텍스트 정의
         const i18n = {
             kor: {
                 tablePrefix: "테이블 번호: ",
                 tableNone: "미지정",
-                orderBtn: "주문하기",
+                submitBtn: "주문하기",
                 loading: "주문을 전송 중입니다... 잠시만 기다려주세요.",
                 noTableAlert: "테이블 정보가 없습니다. QR 코드를 다시 스캔해 주세요.",
-                confirmOrder: (table, menu, qty) => `[${table}]번 테이블\n'${menu} (${qty}잔)' 주문을 전송하시겠습니까?`,
+                noItemAlert: "최소 1개 이상의 메뉴를 선택해 주세요.",
+                confirmOrder: (table, summaryList) => `[${table}]번 테이블\n\n${summaryList}\n\n위 내용으로 주문을 전송하시겠습니까?`,
                 successAlert: "주문이 성공적으로 접수되었습니다!",
                 errorAlert: "주문 전송 중 오류가 발생했습니다."
             },
             eng: {
                 tablePrefix: "Table No: ",
                 tableNone: "Unassigned",
-                orderBtn: "Order",
+                submitBtn: "Place Order",
                 loading: "Sending your order... Please wait.",
                 noTableAlert: "No table information found. Please scan the QR code again.",
-                confirmOrder: (table, menu, qty) => `[Table ${table}]\nSend order for '${menu} (${qty} cup(s))'?`,
+                noItemAlert: "Please select at least one item.",
+                confirmOrder: (table, summaryList) => `[Table ${table}]\n\n${summaryList}\n\nWould you like to place this order?`,
                 successAlert: "Your order has been successfully placed!",
                 errorAlert: "An error occurred while sending your order."
             }
         };
 
-        // 1. URL 파라미터에서 테이블 번호 추출
         const urlParams = new URLSearchParams(window.location.search);
         const tableNo = urlParams.get('table') || '미지정';
 
-        // 2. 언어 변경 처리 함수
         function setLanguage(lang) {
             currentLang = lang;
             
-            // 스위치 버튼 활성화 스타일
             document.getElementById('btn-kor').classList.toggle('active', lang === 'kor');
             document.getElementById('btn-eng').classList.toggle('active', lang === 'eng');
 
-            // 테이블 표시 텍스트 변경
             const displayTable = tableNo === '미지정' ? i18n[lang].tableNone : tableNo;
             document.getElementById('table-display').innerText = `${i18n[lang].tablePrefix}${displayTable}`;
 
-            // 메뉴 이름 변경
-            document.querySelectorAll('.menu-name').forEach(el => {
-                el.innerText = lang === 'kor' ? el.getAttribute('data-menu-kor') : el.getAttribute('data-menu-eng');
+            document.querySelectorAll('.menu-card').forEach(card => {
+                const menuNameEl = card.querySelector('.menu-name');
+                menuNameEl.innerText = lang === 'kor' ? card.getAttribute('data-menu-kor') : card.getAttribute('data-menu-eng');
             });
 
-            // 주문 버튼 텍스트 변경
-            document.querySelectorAll('.btn-order').forEach(el => {
-                el.innerText = i18n[lang].orderBtn;
-            });
-
-            // 로딩 텍스트 변경
+            document.getElementById('btn-submit-all').innerText = i18n[lang].submitBtn;
             document.getElementById('loading-text').innerText = i18n[lang].loading;
         }
 
-        // 초기 화면 표시 (기본 언어 설정 적용)
         setLanguage('kor');
 
-        // 3. 수량 변경 함수
-        function changeQty(elementId, change) {
-            const qtyEl = document.getElementById(elementId);
+        // 수량 변경 함수 (기본값 0부터 시작)
+        function changeQty(btnEl, change) {
+            const qtyEl = btnEl.parentElement.querySelector('.qty-val');
             let currentQty = parseInt(qtyEl.innerText);
             currentQty += change;
-            if (currentQty < 1) currentQty = 1;
-            if (currentQty > 10) currentQty = 10;
+            if (currentQty < 0) currentQty = 0;
+            if (currentQty > 20) currentQty = 20;
             qtyEl.innerText = currentQty;
         }
 
-        // 4. 주문 전송 함수
-        function submitOrder(btnEl, qtyElementId) {
+        // 전체 선택된 메뉴 합산 주문 함수
+        function submitCartOrder() {
             if (tableNo === '미지정') {
                 alert(i18n[currentLang].noTableAlert);
                 return;
             }
 
-            const menuCard = btnEl.closest('.menu-card');
-            const menuNameEl = menuCard.querySelector('.menu-name');
-            const menuName = currentLang === 'kor' ? menuNameEl.getAttribute('data-menu-kor') : menuNameEl.getAttribute('data-menu-eng');
-            const quantity = document.getElementById(qtyElementId).innerText;
+            const selectedItems = [];
+            document.querySelectorAll('.menu-card').forEach(card => {
+                const qty = parseInt(card.querySelector('.qty-val').innerText);
+                if (qty > 0) {
+                    const menuName = currentLang === 'kor' ? card.getAttribute('data-menu-kor') : card.getAttribute('data-menu-eng');
+                    selectedItems.push({ name: menuName, qty: qty });
+                }
+            });
 
-            if (confirm(i18n[currentLang].confirmOrder(tableNo, menuName, quantity))) {
+            if (selectedItems.length === 0) {
+                alert(i18n[currentLang].noItemAlert);
+                return;
+            }
+
+            // 합산 목록 문자열 생성 (예: "아메리카노 (HOT) 10잔, 카페라떼 (ICE) 5잔")
+            const summaryText = selectedItems.map(item => `${item.name} (${item.qty}잔)`).join('\n');
+            const fullMenuNameForGAS = selectedItems.map(item => `${item.name} ${item.qty}잔`).join(', ');
+
+            if (confirm(i18n[currentLang].confirmOrder(tableNo, summaryText))) {
                 const loadingText = document.getElementById('loading-text');
                 loadingText.style.display = 'block';
-
-                // 구글 시트에는 바리스타 전달용으로 표준 표기(메뉴명 + 수량) 전송
-                const fullMenuName = `${menuName} (${quantity}잔)`;
 
                 fetch(GAS_URL, {
                     method: 'POST',
@@ -181,13 +187,15 @@
                     },
                     body: JSON.stringify({
                         tableNo: tableNo,
-                        menu: fullMenuName
+                        menu: fullMenuNameForGAS
                     })
                 })
                 .then(() => {
                     loadingText.style.display = 'none';
                     alert(i18n[currentLang].successAlert);
-                    document.getElementById(qtyElementId).innerText = "1";
+                    
+                    // 주문 완료 후 모든 수량 0으로 리셋
+                    document.querySelectorAll('.qty-val').forEach(el => el.innerText = "0");
                 })
                 .catch(error => {
                     loadingText.style.display = 'none';
