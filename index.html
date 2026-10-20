@@ -45,7 +45,6 @@
         .opt-btn { flex: 1; padding: 12px 0; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; border: 2px solid #ddd; background: #f8f9fa; color: #555; }
         .opt-btn.active { background: #343a40; border-color: #343a40; color: #fff; }
 
-        /* 🔥 HOT / ICED 시인성 강화 전용 버튼 스타일 */
         .opt-hot { background: #fff5f5; border-color: #ff6b6b; color: #ff6b6b; }
         .opt-hot.active { background: #ff6b6b !important; border-color: #ff6b6b !important; color: #fff !important; }
 
@@ -220,9 +219,10 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzFII67V5lEWlEOMH9x9Ao8PnQUhk4Z9KZJ2x0PB-5GPa8XHKhTqDa8htVK2X-rhbrKVw/exec";
 
         let currentLang = 'kor';
-        let cart = [];
+        let cart = []; // 장바구니 배열 [{nameKor, nameEng, option, beanKor, beanEng, cinnamonKor, cinnamonEng, qty}]
         
-        let selectedMenuName = "";
+        let selectedMenuKor = "";
+        let selectedMenuEng = "";
         let selectedOption = "HOT";
         let selectedBeanOpt = "REGULAR";
         let selectedCinnamonOpt = "O";
@@ -337,8 +337,8 @@
 
         setLanguage('kor');
 
-        function openOptionModal(menuName, availableOpts, hasCinnamon, isCoffee) {
-            selectedMenuName = menuName;
+        function openOptionModal(menuKor, availableOpts, hasCinnamon, isCoffee) {
+            selectedMenuKor = menuKor;
             isCappuccinoMenu = hasCinnamon;
             isCoffeeMenu = isCoffee;
             modalQty = 1;
@@ -346,13 +346,14 @@
             selectedCinnamonOpt = "O";
             document.getElementById('modal-qty').innerText = modalQty;
             
-            const isEng = (currentLang === 'eng');
-            let displayName = menuName;
+            // 영문 메뉴명 추출
             document.querySelectorAll('.menu-name').forEach(el => {
-                if (el.getAttribute('data-kor') === menuName) {
-                    displayName = isEng ? el.getAttribute('data-eng') : el.getAttribute('data-kor');
+                if (el.getAttribute('data-kor') === menuKor) {
+                    selectedMenuEng = el.getAttribute('data-eng');
                 }
             });
+
+            const displayName = currentLang === 'eng' ? selectedMenuEng : selectedMenuKor;
             document.getElementById('modal-menu-name').innerText = displayName;
 
             const beanSec = document.getElementById('bean-section');
@@ -369,7 +370,6 @@
             document.getElementById('label-temp').innerText = i18n[currentLang].labelTemp;
             const optContainer = document.getElementById('modal-option-buttons');
             
-            // 🔥 HOT/ICED 전용 색상 버튼 동적 세팅
             if (availableOpts.length === 1) {
                 selectedOption = 'HOT';
                 optContainer.innerHTML = `<button class="opt-btn opt-hot active" style="flex:1;">HOT</button>`;
@@ -447,15 +447,28 @@
             document.getElementById('optionModal').style.display = 'none';
         }
 
+        // 장바구니 담기 (한글/영문 옵션명 함께 기록)
         function addToCart() {
-            const beanStr = isCoffeeMenu && selectedBeanOpt === 'DECAF' ? (currentLang === 'eng' ? 'Decaf' : '디카페인') : '';
-            const cinnamonStr = isCappuccinoMenu ? (selectedCinnamonOpt === 'O' ? (currentLang === 'eng' ? 'Cinnamon Yes' : '시나몬 O') : (currentLang === 'eng' ? 'Cinnamon No' : '시나몬 X')) : '';
-            
-            const existing = cart.find(item => item.name === selectedMenuName && item.option === selectedOption && item.bean === beanStr && item.cinnamon === cinnamonStr);
+            const beanKor = isCoffeeMenu && selectedBeanOpt === 'DECAF' ? '디카페인' : '';
+            const beanEng = isCoffeeMenu && selectedBeanOpt === 'DECAF' ? 'Decaf' : '';
+
+            const cinnamonKor = isCappuccinoMenu ? (selectedCinnamonOpt === 'O' ? '시나몬 O' : '시나몬 X') : '';
+            const cinnamonEng = isCappuccinoMenu ? (selectedCinnamonOpt === 'O' ? 'Cinnamon Yes' : 'Cinnamon No') : '';
+
+            const existing = cart.find(item => item.nameKor === selectedMenuKor && item.option === selectedOption && item.beanKor === beanKor && item.cinnamonKor === cinnamonKor);
             if (existing) {
                 existing.qty += modalQty;
             } else {
-                cart.push({ name: selectedMenuName, option: selectedOption, bean: beanStr, cinnamon: cinnamonStr, qty: modalQty });
+                cart.push({ 
+                    nameKor: selectedMenuKor, 
+                    nameEng: selectedMenuEng, 
+                    option: selectedOption, 
+                    beanKor: beanKor, 
+                    beanEng: beanEng, 
+                    cinnamonKor: cinnamonKor, 
+                    cinnamonEng: cinnamonEng, 
+                    qty: modalQty 
+                });
             }
             closeOptionModal();
             updateCartUI();
@@ -481,16 +494,13 @@
             cart.forEach((item, index) => {
                 totalQty += item.qty;
 
-                let displayName = item.name;
-                document.querySelectorAll('.menu-name').forEach(el => {
-                    if (el.getAttribute('data-kor') === item.name) {
-                        displayName = currentLang === 'eng' ? el.getAttribute('data-eng') : el.getAttribute('data-kor');
-                    }
-                });
+                const displayName = currentLang === 'eng' ? item.nameEng : item.nameKor;
+                const displayBean = currentLang === 'eng' ? item.beanEng : item.beanKor;
+                const displayCinnamon = currentLang === 'eng' ? item.cinnamonEng : item.cinnamonKor;
 
                 const badgeClass = item.option === 'HOT' ? 'badge-hot' : 'badge-iced';
-                const beanBadge = item.bean ? `<span class="badge-decaf">${item.bean}</span>` : '';
-                const cinnamonBadge = item.cinnamon ? `<span class="badge-cinnamon">${item.cinnamon}</span>` : '';
+                const beanBadge = displayBean ? `<span class="badge-decaf">${displayBean}</span>` : '';
+                const cinnamonBadge = displayCinnamon ? `<span class="badge-cinnamon">${displayCinnamon}</span>` : '';
                 const qtyText = currentLang === 'eng' ? `${item.qty} cup(s)` : `${item.qty}잔`;
 
                 const div = document.createElement('div');
@@ -505,6 +515,7 @@
             document.getElementById('btn-submit-all').innerText = i18n[currentLang].submitBtn(totalQty);
         }
 
+        // 최종 주문 제출 (영문 모드일 경우 팝업 및 전송 텍스트 영문 처리)
         function submitCartOrder() {
             if (tableNo === '미지정') {
                 alert(i18n[currentLang].noTableAlert);
@@ -517,11 +528,38 @@
 
             const memoText = document.getElementById('order-memo').value.trim();
 
-            const summaryText = cart.map(i => `${i.name} [${i.bean ? i.bean + ', ' : ''}${i.option}${i.cinnamon ? ', ' + i.cinnamon : ''}] (${currentLang === 'eng' ? i.qty + ' cup(s)' : i.qty + '잔'})`).join('\n');
+            // 현재 언어에 맞게 요약문 구성
+            const summaryText = cart.map(i => {
+                const name = currentLang === 'eng' ? i.nameEng : i.nameKor;
+                const bean = currentLang === 'eng' ? i.beanEng : i.beanKor;
+                const cinnamon = currentLang === 'eng' ? i.cinnamonEng : i.cinnamonKor;
+                const qtyUnit = currentLang === 'eng' ? `${i.qty} cup(s)` : `${i.qty}잔`;
+                
+                let opts = [];
+                if (bean) opts.push(bean);
+                opts.push(i.option);
+                if (cinnamon) opts.push(cinnamon);
+
+                return `${name} [${opts.join(', ')}] (${qtyUnit})`;
+            }).join('\n');
             
-            let fullMenuNameForGAS = cart.map(i => `${i.name} (${i.bean ? i.bean + ', ' : ''}${i.option}${i.cinnamon ? ', ' + i.cinnamon : ''}) ${i.qty}잔`).join(', ');
+            // 백엔드 전송용 텍스트
+            let fullMenuNameForGAS = cart.map(i => {
+                const name = currentLang === 'eng' ? i.nameEng : i.nameKor;
+                const bean = currentLang === 'eng' ? i.beanEng : i.beanKor;
+                const cinnamon = currentLang === 'eng' ? i.cinnamonEng : i.cinnamonKor;
+                const qtyUnit = currentLang === 'eng' ? `${i.qty} cup(s)` : `${i.qty}잔`;
+
+                let opts = [];
+                if (bean) opts.push(bean);
+                opts.push(i.option);
+                if (cinnamon) opts.push(cinnamon);
+
+                return `${name} (${opts.join(', ')}) ${qtyUnit}`;
+            }).join(', ');
+
             if (memoText) {
-                fullMenuNameForGAS += ` [요청사항: ${memoText}]`;
+                fullMenuNameForGAS += ` [${currentLang === 'eng' ? 'Requests' : '요청사항'}: ${memoText}]`;
             }
 
             if (confirm(i18n[currentLang].confirmOrder(tableNo, summaryText, memoText))) {
