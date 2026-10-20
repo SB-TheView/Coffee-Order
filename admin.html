@@ -52,7 +52,6 @@
             gap: 6px;
         }
 
-        /* 🎨 뱃지 색상 강제 지정 */
         .badge-hot { background: #ff6b6b !important; color: #fff !important; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .badge-iced { background: #339af0 !important; color: #fff !important; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .badge-decaf { background: #2ed573 !important; color: #fff !important; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
@@ -71,6 +70,7 @@
 
         .time-text { font-size: 12px; color: #666; text-align: right; border-top: 1px solid #eee; padding-top: 8px; }
         .no-order { text-align: center; color: #888; grid-column: 1 / -1; margin-top: 50px; font-size: 18px; }
+        .error-order { text-align: center; color: #dc3545; grid-column: 1 / -1; margin-top: 50px; font-size: 16px; font-weight: bold; }
 
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
         .modal-content { background-color: #fff; margin: 5% auto; padding: 20px; border: 1px solid #ccc; width: 85%; max-width: 700px; border-radius: 12px; max-height: 80vh; overflow-y: auto; color: #333; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
@@ -129,11 +129,10 @@
             "Green Tea": "녹차", "Earl Grey": "얼그레이", "English Breakfast": "잉글리쉬 블랙퍼스트", "Milk Chocolate": "밀크 초콜릿"
         };
 
-        // 데이터 파서
         function renderOrderItems(rawMenu) {
             if (!rawMenu) return "";
 
-            let cleanStr = rawMenu.replace(/♪ert\{\}/g, "").replace(/&ert\{\}/g, "");
+            let cleanStr = String(rawMenu).replace(/♪ert\{\}/g, "").replace(/&ert\{\}/g, "");
             let memoText = "";
 
             if (cleanStr.includes("[요청사항:")) {
@@ -167,7 +166,6 @@
                     if (tokens.length >= 2) name = tokens[1];
                 }
 
-                // 영어 명칭 번역 및 기호 정리
                 for (let [eng, kor] of Object.entries(menuMap)) {
                     name = name.replace(new RegExp(eng, 'g'), kor);
                 }
@@ -240,13 +238,19 @@
                     return date.toTimeString().substring(0, 8);
                 }
             } catch (e) {}
-            return timestampStr.length >= 19 ? timestampStr.substring(11, 19) : timestampStr;
+            return String(timestampStr).length >= 19 ? String(timestampStr).substring(11, 19) : timestampStr;
         }
 
         function fetchOrders() {
             fetch(GAS_URL)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error("네트워크 응답 상태 불량");
+                    return response.json();
+                })
                 .then(data => {
+                    if (!Array.isArray(data)) {
+                        throw new Error("데이터 형식이 배열이 아닙니다.");
+                    }
                     cachedOrders = data;
                     const servedTimes = getServedTimes();
                     const now = Date.now();
@@ -270,7 +274,13 @@
 
                     renderDashboard(activeOrders);
                 })
-                .catch(err => console.error('데이터 로드 실패:', err));
+                .catch(err => {
+                    console.error('데이터 로드 실패:', err);
+                    const orderListEl = document.getElementById('order-list');
+                    if (cachedOrders.length === 0) {
+                        orderListEl.innerHTML = `<div class="error-order">⚠️ 데이터를 불러오지 못했습니다.<br>구글 앱스 스크립트(GAS) 웹 앱 URL 및 권한 설정을 확인해 주세요.</div>`;
+                    }
+                });
         }
 
         function renderDashboard(orders) {
