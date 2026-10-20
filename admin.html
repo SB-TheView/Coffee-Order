@@ -13,7 +13,8 @@
         .btn-history { background: #333; color: #fff; border: 1px solid #555; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .btn-history:hover { background: #444; }
 
-        .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        /* 카드 가로 폭을 넓게 조정하여 텍스트가 가로로 길게 배치되도록 설정 */
+        .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 15px; }
         
         .order-card { 
             background: #1e1e1e; 
@@ -35,17 +36,37 @@
         .table-badge { background: #ff4757; color: white; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 15px; }
         .status-badge { background: #444; color: #ccc; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
 
-        .menu-list-box { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-        .menu-item { font-size: 16px; font-weight: bold; color: #ffa502; background: rgba(255,255,255,0.05); padding: 8px 10px; border-radius: 6px; }
+        .menu-list-box { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        
+        /* 메뉴 아이템 한 줄 가로 출력 및 줄바꿈 방지 */
+        .menu-item-row { 
+            font-size: 15px; 
+            font-weight: bold; 
+            color: #ffa502; 
+            background: rgba(255,255,255,0.05); 
+            padding: 10px 12px; 
+            border-radius: 6px; 
+            white-space: nowrap; 
+            overflow-x: auto; 
+        }
 
-        /* 고객 요청사항 메모 강조 박스 */
-        .memo-box { background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107; color: #ffecb3; padding: 8px 10px; border-radius: 4px; font-size: 13px; margin-bottom: 12px; line-height: 1.4; }
+        /* 품목명 바로 아래에 위치하는 개별 요청사항 박스 */
+        .item-memo-box { 
+            background: rgba(255, 193, 7, 0.2); 
+            border-left: 3px solid #ffc107; 
+            color: #ffecb3; 
+            padding: 6px 10px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            margin-top: 4px; 
+            font-weight: normal;
+        }
 
         .time-text { font-size: 12px; color: #aaa; text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
         .no-order { text-align: center; color: #666; grid-column: 1 / -1; margin-top: 50px; font-size: 18px; }
 
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
-        .modal-content { background-color: #1e1e1e; margin: 5% auto; padding: 20px; border: 1px solid #444; width: 85%; max-width: 650px; border-radius: 12px; max-height: 80vh; overflow-y: auto; color: #fff; }
+        .modal-content { background-color: #1e1e1e; margin: 5% auto; padding: 20px; border: 1px solid #444; width: 85%; max-width: 700px; border-radius: 12px; max-height: 80vh; overflow-y: auto; color: #fff; }
         .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close-modal:hover { color: #fff; }
         .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
@@ -78,7 +99,7 @@
                     <tr>
                         <th>접수시간</th>
                         <th>테이블</th>
-                        <th>메뉴 및 요청사항 내역</th>
+                        <th>주문 내역</th>
                         <th>상태</th>
                         <th>관리</th>
                     </tr>
@@ -93,6 +114,44 @@
 
         let previousOrderCount = null;
         let cachedOrders = [];
+
+        // 영문 메뉴명/옵션을 한국어로 완벽하게 변환하는 매핑 사전 (실무 직관성 확보)
+        function translateToKorean(rawText) {
+            if (!rawText) return "";
+            let text = rawText;
+
+            // 메뉴명 매핑
+            const menuMap = {
+                "Espresso": "에스프레소",
+                "Double Espresso (Doppio)": "더블 에스프레소 (도피오)",
+                "Americano": "아메리카노",
+                "Cafe Latte": "카페라떼",
+                "Vanilla Latte": "바닐라라떼",
+                "Cappuccino": "카푸치노",
+                "Chamomile": "카모마일",
+                "Peppermint": "페퍼민트",
+                "Rooibos": "루이보스",
+                "Red Berry": "레드베리",
+                "Green Tea": "녹차",
+                "Earl Grey": "얼그레이",
+                "English Breakfast": "잉글리쉬 블랙퍼스트",
+                "Milk Chocolate": "밀크 초콜릿"
+            };
+
+            for (let [eng, kor] of Object.entries(menuMap)) {
+                text = text.replace(new RegExp(eng, 'g'), kor);
+            }
+
+            // 옵션 매핑
+            text = text.replace(/Decaf/g, "디카페인")
+                       .replace(/Regular/g, "일반")
+                       .replace(/Cinnamon Yes/g, "시나몬 O")
+                       .replace(/Cinnamon No/g, "시나몬 X")
+                       .replace(/cup\(s\)/g, "잔")
+                       .replace(/Requests:/g, "요청사항:");
+
+            return text;
+        }
 
         function getServedTimes() {
             try { return JSON.parse(localStorage.getItem('the_view_served_times') || '{}'); } catch (e) { return {}; }
@@ -202,23 +261,37 @@
                 card.id = `card-${order.row}`;
                 card.setAttribute('ondblclick', `handleCardDblClick(${order.row}, '${order.status}')`);
 
-                // 메뉴와 요청사항 분리 처리
-                let rawMenu = order.menu || "";
-                let memoText = "";
-                if (rawMenu.includes("[요청사항:")) {
-                    const parts = rawMenu.split("[요청사항:");
-                    rawMenu = parts[0].trim();
-                    memoText = parts[1].replace("]", "").trim();
+                // 전체 메뉴 텍스트를 한국어로 강제 변환
+                const translatedMenu = translateToKorean(order.menu || "");
+
+                // 품목별 줄바꿈 및 개별 요청사항(메모) 분리 파싱
+                let menuHtml = '';
+                let globalMemo = "";
+
+                if (translatedMenu.includes("요청사항:")) {
+                    const parts = translatedMenu.split("요청사항:");
+                    const itemsPart = parts[0].trim();
+                    globalMemo = parts[1].replace(/\[\vert{}\]/g, "").trim();
+
+                    itemsPart.split(',').forEach(item => {
+                        const cleanItem = item.trim();
+                        if (cleanItem) {
+                            menuHtml += `<div class="menu-item-row">${cleanItem}</div>`;
+                        }
+                    });
+
+                    if (globalMemo) {
+                        menuHtml += `<div class="item-memo-box"><b>요청사항:</b> ${globalMemo}</div>`;
+                    }
+                } else {
+                    translatedMenu.split(',').forEach(item => {
+                        const cleanItem = item.trim();
+                        if (cleanItem) {
+                            menuHtml += `<div class="menu-item-row">${cleanItem}</div>`;
+                        }
+                    });
                 }
 
-                let menuHtml = '';
-                rawMenu.split(',').forEach(item => {
-                    if (item.trim()) {
-                        menuHtml += `<div class="menu-item">${item.trim()}</div>`;
-                    }
-                });
-
-                let memoHtml = memoText ? `<div class="memo-box"><b>요청사항:</b> ${memoText}</div>` : '';
                 const cleanTime = formatTime(order.timestamp);
 
                 card.innerHTML = `
@@ -228,7 +301,6 @@
                             <span class="status-badge">${statusLabel}</span>
                         </div>
                         <div class="menu-list-box">${menuHtml}</div>
-                        ${memoHtml}
                     </div>
                     <div class="time-text">${cleanTime} 접수</div>
                 `;
@@ -285,11 +357,12 @@
 
             [...cachedOrders].reverse().forEach(order => {
                 const cleanDateTime = formatDateTime(order.timestamp);
+                const translatedMenu = translateToKorean(order.menu || "");
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${cleanDateTime}</td>
                     <td><b>${order.tableNo}</b></td>
-                    <td>${order.menu}</td>
+                    <td>${translatedMenu}</td>
                     <td><span style="color: ${order.status === '제공완료' ? '#1e90ff' : (order.status === '제조완료' ? '#2ed573' : '#ffa502')}">${order.status}</span></td>
                     <td><button class="btn-restore" onclick="restoreOrder(${order.row})">복구</button></td>
                 `;
