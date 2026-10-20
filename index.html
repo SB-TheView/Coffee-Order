@@ -45,6 +45,13 @@
         .opt-btn { flex: 1; padding: 12px 0; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; border: 2px solid #ddd; background: #f8f9fa; color: #555; }
         .opt-btn.active { background: #343a40; border-color: #343a40; color: #fff; }
 
+        /* 🔥 HOT / ICED 시인성 강화 전용 버튼 스타일 */
+        .opt-hot { background: #fff5f5; border-color: #ff6b6b; color: #ff6b6b; }
+        .opt-hot.active { background: #ff6b6b !important; border-color: #ff6b6b !important; color: #fff !important; }
+
+        .opt-iced { background: #e7f5ff; border-color: #339af0; color: #339af0; }
+        .opt-iced.active { background: #339af0 !important; border-color: #339af0 !important; color: #fff !important; }
+
         .qty-box { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; }
         .btn-q { width: 36px; height: 36px; background: #eee; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
         .q-val { font-size: 18px; font-weight: bold; width: 30px; }
@@ -176,7 +183,6 @@
         <div class="modal-content">
             <div class="modal-title" id="modal-menu-name">메뉴명</div>
             
-            <!-- 커피 전용 원두 옵션 (일반 / 디카페인) -->
             <div id="bean-section" style="display: none;">
                 <div class="modal-subtitle" id="label-bean">원두 선택</div>
                 <div class="option-buttons">
@@ -188,7 +194,6 @@
             <div class="modal-subtitle" id="label-temp">온도 선택</div>
             <div class="option-buttons" id="modal-option-buttons"></div>
 
-            <!-- 카푸치노 전용 시나몬 옵션 -->
             <div id="cinnamon-section" style="display: none;">
                 <div class="modal-subtitle" id="label-cinnamon">시나몬 가루</div>
                 <div class="option-buttons">
@@ -350,7 +355,6 @@
             });
             document.getElementById('modal-menu-name').innerText = displayName;
 
-            // 원두 옵션 영역
             const beanSec = document.getElementById('bean-section');
             if (isCoffeeMenu) {
                 beanSec.style.display = 'block';
@@ -362,21 +366,21 @@
                 beanSec.style.display = 'none';
             }
 
-            // 온도 옵션 영역
             document.getElementById('label-temp').innerText = i18n[currentLang].labelTemp;
             const optContainer = document.getElementById('modal-option-buttons');
+            
+            // 🔥 HOT/ICED 전용 색상 버튼 동적 세팅
             if (availableOpts.length === 1) {
                 selectedOption = 'HOT';
-                optContainer.innerHTML = `<button class="opt-btn active" style="flex:1;">HOT</button>`;
+                optContainer.innerHTML = `<button class="opt-btn opt-hot active" style="flex:1;">HOT</button>`;
             } else {
                 selectedOption = 'HOT';
                 optContainer.innerHTML = `
-                    <button id="opt-hot-btn" class="opt-btn active" onclick="selectOption('HOT')">HOT</button>
-                    <button id="opt-iced-btn" class="opt-btn" onclick="selectOption('ICED')">ICED</button>
+                    <button id="opt-hot-btn" class="opt-btn opt-hot active" onclick="selectOption('HOT')">HOT</button>
+                    <button id="opt-iced-btn" class="opt-btn opt-iced" onclick="selectOption('ICED')">ICED</button>
                 `;
             }
 
-            // 시나몬 영역
             const cinnamonSec = document.getElementById('cinnamon-section');
             if (isCappuccinoMenu) {
                 cinnamonSec.style.display = 'block';
@@ -410,11 +414,11 @@
             const icedBtn = document.getElementById('opt-iced-btn');
             if(hotBtn && icedBtn) {
                 if(opt === 'HOT') {
-                    hotBtn.className = 'opt-btn active';
-                    icedBtn.className = 'opt-btn';
+                    hotBtn.className = 'opt-btn opt-hot active';
+                    icedBtn.className = 'opt-btn opt-iced';
                 } else {
-                    icedBtn.className = 'opt-btn active';
-                    hotBtn.className = 'opt-btn';
+                    icedBtn.className = 'opt-btn opt-iced active';
+                    hotBtn.className = 'opt-btn opt-hot';
                 }
             }
         }
