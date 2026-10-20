@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE VIEW Coffee-Order</title>
+    <title>THE VIEW - Coffee & Tea Order</title>
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }
         .container { max-width: 480px; margin: 0 auto; background: #ffffff; padding: 20px 20px 80px 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; }
@@ -20,6 +20,15 @@
         .brand-sub { font-size: 18px; font-weight: 600; color: #555; letter-spacing: 3px; margin-top: 6px; }
         
         .table-badge { display: inline-block; background: #007bff; color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; margin-top: 14px; }
+
+        /* 둥근 카테고리 탭 스타일 */
+        .category-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { background: #e9ecef; border: none; padding: 8px 24px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #555; cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background: #343a40; color: white; }
+
+        /* 메뉴 그룹 영역 (탭 전환용) */
+        .menu-group { display: none; }
+        .menu-group.active { display: block; }
         
         /* 메뉴 카드 스타일 */
         .menu-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid #eee; }
@@ -56,8 +65,14 @@
             <div id="table-display" class="table-badge">테이블 확인 중...</div>
         </div>
 
-        <div id="menu-list">
-            <!-- 메뉴 1: 아메리카노 (HOT) -->
+        <!-- 둥근 카테고리 탭 선택지 -->
+        <div class="category-tabs">
+            <button id="tab-coffee" class="tab-btn active" onclick="switchCategory('coffee')">커피</button>
+            <button id="tab-tea" class="tab-btn" onclick="switchCategory('tea')">차(Tea)</button>
+        </div>
+
+        <!-- 1. 커피 메뉴 그룹 -->
+        <div id="group-coffee" class="menu-group active">
             <div class="menu-card" data-menu-kor="아메리카노 (HOT)" data-menu-eng="Americano (HOT)">
                 <span class="menu-name">아메리카노 (HOT)</span>
                 <div class="order-controls">
@@ -67,9 +82,20 @@
                 </div>
             </div>
 
-            <!-- 메뉴 2: 카페라떼 (ICE) -->
             <div class="menu-card" data-menu-kor="카페라떼 (ICE)" data-menu-eng="Cafe Latte (ICE)">
                 <span class="menu-name">카페라떼 (ICE)</span>
+                <div class="order-controls">
+                    <button class="btn-qty" onclick="changeQty(this, -1)">-</button>
+                    <span class="qty-val">0</span>
+                    <button class="btn-qty" onclick="changeQty(this, 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 차(Tea) 메뉴 그룹 (추가 메뉴 세팅 가능) -->
+        <div id="group-tea" class="menu-group">
+            <div class="menu-card" data-menu-kor="카모마일 (HOT)" data-menu-eng="Chamomile (HOT)">
+                <span class="menu-name">카모마일 (HOT)</span>
                 <div class="order-controls">
                     <button class="btn-qty" onclick="changeQty(this, -1)">-</button>
                     <span class="qty-val">0</span>
@@ -88,15 +114,18 @@
 
     <script>
         // ⚠️ 구글 앱스 스크립트 웹 앱 URL을 입력하세요!
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzcPdwl0o5OyCZFnnaQ0hwnZ2gdzlbDOgGa23TADp-8sMGZoJ0ZP4i4eH7FOc4w-Wbv9w/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzFII67V5lEWlEOMH9x9Ao8PnQUhk4Z9KZJ2x0PB-5GPa8XHKhTqDa8htVK2X-rhbrKVw/exec";
 
         let currentLang = 'kor';
+        let currentCategory = 'coffee';
 
         const i18n = {
             kor: {
                 tablePrefix: "테이블 번호: ",
                 tableNone: "미지정",
-                submitBtn: "주문하기",
+                tabCoffee: "커피",
+                tabTea: "차(Tea)",
+                submitBtn: (total) => total > 0 ? `주문하기 (총 ${total}잔)` : "주문하기",
                 loading: "주문을 전송 중입니다... 잠시만 기다려주세요.",
                 noTableAlert: "테이블 정보가 없습니다. QR 코드를 다시 스캔해 주세요.",
                 noItemAlert: "최소 1개 이상의 메뉴를 선택해 주세요.",
@@ -107,7 +136,9 @@
             eng: {
                 tablePrefix: "Table No: ",
                 tableNone: "Unassigned",
-                submitBtn: "Place Order",
+                tabCoffee: "Coffee",
+                tabTea: "Tea",
+                submitBtn: (total) => total > 0 ? `Place Order (${total} cup(s) total)` : "Place Order",
                 loading: "Sending your order... Please wait.",
                 noTableAlert: "No table information found. Please scan the QR code again.",
                 noItemAlert: "Please select at least one item.",
@@ -120,11 +151,33 @@
         const urlParams = new URLSearchParams(window.location.search);
         const tableNo = urlParams.get('table') || '미지정';
 
+        // 카테고리 탭 전환 함수
+        function switchCategory(category) {
+            currentCategory = category;
+            document.getElementById('tab-coffee').classList.toggle('active', category === 'coffee');
+            document.getElementById('tab-tea').classList.toggle('active', category === 'tea');
+            document.getElementById('group-coffee').classList.toggle('active', category === 'coffee');
+            document.getElementById('group-tea').classList.toggle('active', category === 'tea');
+        }
+
+        // 총 선택 수량 계산 및 버튼 텍스트 업데이트
+        function updateTotalQty() {
+            let total = 0;
+            document.querySelectorAll('.qty-val').forEach(el => {
+                total += parseInt(el.innerText) || 0;
+            });
+            document.getElementById('btn-submit-all').innerText = i18n[currentLang].submitBtn(total);
+        }
+
         function setLanguage(lang) {
             currentLang = lang;
             
             document.getElementById('btn-kor').classList.toggle('active', lang === 'kor');
             document.getElementById('btn-eng').classList.toggle('active', lang === 'eng');
+
+            // 탭 이름 다국어 적용
+            document.getElementById('tab-coffee').innerText = i18n[lang].tabCoffee;
+            document.getElementById('tab-tea').innerText = i18n[lang].tabTea;
 
             const displayTable = tableNo === '미지정' ? i18n[lang].tableNone : tableNo;
             document.getElementById('table-display').innerText = `${i18n[lang].tablePrefix}${displayTable}`;
@@ -134,13 +187,12 @@
                 menuNameEl.innerText = lang === 'kor' ? card.getAttribute('data-menu-kor') : card.getAttribute('data-menu-eng');
             });
 
-            document.getElementById('btn-submit-all').innerText = i18n[lang].submitBtn;
             document.getElementById('loading-text').innerText = i18n[lang].loading;
+            updateTotalQty();
         }
 
         setLanguage('kor');
 
-        // 수량 변경 함수 (기본값 0부터 시작)
         function changeQty(btnEl, change) {
             const qtyEl = btnEl.parentElement.querySelector('.qty-val');
             let currentQty = parseInt(qtyEl.innerText);
@@ -148,9 +200,10 @@
             if (currentQty < 0) currentQty = 0;
             if (currentQty > 20) currentQty = 20;
             qtyEl.innerText = currentQty;
+
+            updateTotalQty();
         }
 
-        // 전체 선택된 메뉴 합산 주문 함수
         function submitCartOrder() {
             if (tableNo === '미지정') {
                 alert(i18n[currentLang].noTableAlert);
@@ -171,7 +224,6 @@
                 return;
             }
 
-            // 합산 목록 문자열 생성 (예: "아메리카노 (HOT) 10잔, 카페라떼 (ICE) 5잔")
             const summaryText = selectedItems.map(item => `${item.name} (${item.qty}잔)`).join('\n');
             const fullMenuNameForGAS = selectedItems.map(item => `${item.name} ${item.qty}잔`).join(', ');
 
@@ -194,8 +246,8 @@
                     loadingText.style.display = 'none';
                     alert(i18n[currentLang].successAlert);
                     
-                    // 주문 완료 후 모든 수량 0으로 리셋
                     document.querySelectorAll('.qty-val').forEach(el => el.innerText = "0");
+                    updateTotalQty();
                 })
                 .catch(error => {
                     loadingText.style.display = 'none';
