@@ -90,7 +90,7 @@
         <h1>THE VIEW 실시간 주문 대시보드</h1>
         <button class="btn-history" onclick="openHistoryModal()">주문 히스토리 보기</button>
     </div>
-    <div class="sub-guide">카드를 더블클릭(2번 터치)하면 [제조완료(연두)] ➔ [제공완료(하늘, 30초 후 숨김)]로 즉시 전환됩니다.</div>
+    <div class="sub-guide">카드를 더블클릭(2번 터치)하면 [제조완료(연두)] ➔ [제공완료(하늘, 5초 후 숨김)]로 즉시 전환됩니다.</div>
 
     <div id="order-list" class="order-container">
         <div class="no-order">주문 데이터를 불러오는 중...</div>
@@ -121,6 +121,8 @@
 
         let previousOrderCount = null;
         let cachedOrders = [];
+        // 더블클릭 직후 새로고침 충돌(깜빡임/꼬임)을 막기 위한 로컬 상태 보호 맵
+        let localStatusOverrides = {}; 
 
         const menuMap = {
             "Espresso": "에스프레소", "Double Espresso (Doppio)": "더블 에스프레소 (도피오)",
@@ -157,11 +159,9 @@
                 let isDecaf = str.includes("디카페인") || str.includes("Decaf");
                 let isCinnamonYes = str.includes("시나몬 O") || str.includes("Cinnamon Yes");
 
-                // 수량 추출을 위한 안전한 방식 (오류 원인 완전히 제거)
                 let qtyNum = "1";
                 const matchDigits = str.match(/\d+/g);
                 if (matchDigits && matchDigits.length > 0) {
-                    // 마지막에 나오는 숫자를 수량으로 채택
                     qtyNum = matchDigits[matchDigits.length - 1];
                 }
 
@@ -174,7 +174,7 @@
                 for (let [eng, kor] of Object.entries(menuMap)) {
                     name = name.replace(new RegExp(eng, 'g'), kor);
                 }
-                name = name.replace(/HOT|ICED|ICE|디카페인|Decaf|시나몬 O|시나몬 X|Cinnamon Yes|Cinnamon No|Regular|일반|none|\||\(\vert{}\)|\d+잔|\d+ cup\(s\)|\*\d+|\d+/gi, "").trim();
+                name = name.replace(/HOT|ICED|ICE|디카페인|Decaf|시나몬 O|시나몬 X|Cinnamon Yes|Cinnamon No|Regular|일반|none|\||\(|\)|\d+잔|\d+ cup\(s\)|\*\d+|\d+/gi, "").trim();
 
                 let tempBadge = isHot ? `<span class="badge-hot">HOT</span>` : (isIced ? `<span class="badge-iced">ICED</span>` : "");
                 let beanBadge = isDecaf ? `<span class="badge-decaf">디카페인</span>` : "";
@@ -256,9 +256,23 @@
                     if (!Array.isArray(data)) {
                         throw new Error("데이터 형식이 배열이 아닙니다.");
                     }
-                    cachedOrders = data;
-                    const servedTimes = getServedTimes();
+
                     const now = Date.now();
+                    const servedTimes = getServedTimes();
+
+                    // 로컬 오버라이드 상태 적용 (서버 응답과 동기화)
+                    data.forEach(order => {
+                        if (localStatusOverrides[order.row]) {
+                            // 오버라이드된 지 4초 이내라면 서버 응답보다 로컬 상태를 우선 유지 (꼬임 방지)
+                            if (now - localStatusOverrides[order.row].time < 4000) {
+                                order.status = localStatusOverrides[order.row].status;
+                            } else {
+                                delete localStatusOverrides[order.row]; // 만료 후 해제
+                            }
+                        }
+                    });
+
+                    cachedOrders = data;
                     
                     const activeOrders = data.filter(order => {
                         if (order.status === "제공완료") {
@@ -266,7 +280,8 @@
                                 servedTimes[order.row] = now;
                                 saveServedTimes(servedTimes);
                             }
-                            if (now - servedTimes[order.row] > 30000) return false;
+                            // 5초 지나면 화면에서 숨김 처리
+                            if (now - servedTimes[order.row] > 5000) return false;
                         }
                         return true;
                     });
@@ -307,7 +322,7 @@
                     statusLabel = '제조완료';
                 } else if (order.status === '제공완료') {
                     statusClass = 'status-served';
-                    statusLabel = '제공완료 (30초 후 숨김)';
+                    statusLabel = '제공완료 (5초 후 숨김)';
                 }
 
                 card.className = `order-card ${statusClass}`;
@@ -335,10 +350,16 @@
             let nextStatus = currentStatus === '제조완료' ? '제공완료' : '제조완료';
             if (currentStatus === '제공완료') return;
 
+            // 로컬 상태 오버라이드에 즉시 등록하여 3초 새로고침 시 깜빡임/꼬임 방지
+            localStatusOverrides[rowIdx] = {
+                status: nextStatus,
+                time: Date.now()
+            };
+
             const cardEl = document.getElementById(`card-${rowIdx}`);
             if (cardEl) {
                 cardEl.className = `order-card ${nextStatus === '제조완료' ? 'status-making' : 'status-served'}`;
-                cardEl.querySelector('.status-badge').innerText = nextStatus === '제조완료' ? '제조완료' : '제공완료 (30초 후 숨김)';
+                cardEl.querySelector('.status-badge').innerText = nextStatus === '제조완료' ? '제조완료' : '제공완료 (5초 후 숨김)';
                 cardEl.setAttribute('ondblclick', `handleCardDblClick(${rowIdx}, '${nextStatus}')`);
             }
 
@@ -356,11 +377,16 @@
                 .catch(err => console.error('상태 전송 실패:', err));
         }
 
-    function restoreOrder(rowIdx) {
+        function restoreOrder(rowIdx) {
             if (confirm("해당 주문을 다시 '접수대기' 상태로 복구하시겠습니까?")) {
                 const servedTimes = getServedTimes();
                 delete servedTimes[rowIdx];
                 saveServedTimes(servedTimes);
+
+                localStatusOverrides[rowIdx] = {
+                    status: '접수대기',
+                    time: Date.now()
+                };
 
                 const target = cachedOrders.find(o => o.row === rowIdx);
                 if (target) target.status = '접수대기';
