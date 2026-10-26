@@ -15,7 +15,11 @@
         .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; margin-top: 10px; }
         .brand-main { font-size: 26px; font-weight: 800; color: #1a1a1a; letter-spacing: 4px; line-height: 1.2; text-transform: uppercase; }
         .brand-sub { font-size: 18px; font-weight: 600; color: #555; letter-spacing: 3px; margin-top: 6px; }
-        .table-badge { display: inline-block; background: #007bff; color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; margin-top: 14px; }
+        
+        /* 테이블 번호 직접 수정 가능한 입력 박스 디자인 */
+        .table-edit-container { display: inline-flex; align-items: center; background: #007bff; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; margin-top: 14px; gap: 6px; box-shadow: 0 2px 5px rgba(0,123,255,0.3); }
+        .table-input { background: transparent; border: none; color: white; font-weight: bold; font-size: 14px; width: 60px; text-align: center; outline: none; border-bottom: 1px dashed rgba(255,255,255,0.7); }
+        .table-input:focus { border-bottom: 1px solid white; }
 
         .category-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
         .tab-btn { background: #e9ecef; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #555; cursor: pointer; }
@@ -86,7 +90,11 @@
         <div class="header">
             <div class="brand-main">THE VIEW</div>
             <div class="brand-sub">Coffee & Tea</div>
-            <div id="table-display" class="table-badge">테이블 확인 중...</div>
+            <!-- 수정 가능한 테이블 입력 뱃지 -->
+            <div class="table-edit-container">
+                <span id="table-label-text">테이블:</span>
+                <input type="text" id="table-input" class="table-input" value="">
+            </div>
         </div>
 
         <div class="category-tabs">
@@ -232,8 +240,7 @@
 
         const i18n = {
             kor: {
-                tablePrefix: "테이블 번호: ",
-                tableNone: "미지정",
+                tableLabel: "테이블:",
                 tabCoffee: "커피",
                 tabTea: "차 (Tea)",
                 selectBtn: "선택하기",
@@ -242,8 +249,6 @@
                 memoLabel: "추가 요청사항 (선택사항)",
                 memoPlaceholder: "요청사항을 입력해 주세요 (예: 얼음은 따로 주세요)",
                 labelBean: "원두 선택",
-                beanRegular: "일반",
-                beanDecaf: "디카페인",
                 labelTemp: "온도 선택",
                 labelCinnamon: "시나몬 가루",
                 cinnamonYes: "시나몬 O",
@@ -251,7 +256,7 @@
                 delBtn: "삭제",
                 submitBtn: (total) => total > 0 ? `주문하기 (총 ${total}잔)` : "주문하기",
                 loading: "주문을 전송 중입니다... 잠시만 기다려주세요.",
-                noTableAlert: "테이블 정보가 없습니다. QR 코드를 다시 스캔해 주세요.",
+                noTableAlert: "테이블 번호를 입력해 주세요.",
                 noItemAlert: "장바구니에 담긴 메뉴가 없습니다.",
                 confirmOrder: (table, summary, memo) => `[${table}]번 테이블\n\n${summary}${memo ? '\n\n요청사항: ' + memo : ''}\n\n위 내용으로 주문을 전송하시겠습니까?`,
                 successAlert: "주문이 성공적으로 접수되었습니다!",
@@ -260,8 +265,7 @@
                 titleCaffeine: "- Caffeine Tea -"
             },
             eng: {
-                tablePrefix: "Table No: ",
-                tableNone: "Unassigned",
+                tableLabel: "Table:",
                 tabCoffee: "Coffee",
                 tabTea: "Tea",
                 selectBtn: "Select",
@@ -270,8 +274,6 @@
                 memoLabel: "Additional Requests (Optional)",
                 memoPlaceholder: "Please enter any requests (e.g., Ice on the side)",
                 labelBean: "Coffee Beans",
-                beanRegular: "Regular",
-                beanDecaf: "Decaf",
                 labelTemp: "Temperature",
                 labelCinnamon: "Cinnamon Powder",
                 cinnamonYes: "Cinnamon Yes",
@@ -279,7 +281,7 @@
                 delBtn: "Delete",
                 submitBtn: (total) => total > 0 ? `Place Order (${total} cup(s) total)` : "Place Order",
                 loading: "Sending your order... Please wait.",
-                noTableAlert: "No table information found. Please scan the QR code again.",
+                noTableAlert: "Please enter a table number.",
                 noItemAlert: "Please add items to your cart.",
                 confirmOrder: (table, summary, memo) => `[Table ${table}]\n\n${summary}${memo ? '\n\nRequests: ' + memo : ''}\n\nWould you like to place this order?`,
                 successAlert: "Your order has been successfully placed!",
@@ -289,8 +291,10 @@
             }
         };
 
+        // URL 파라미터에서 테이블 번호 읽어오기 (기본값 S1 또는 공백)
         const urlParams = new URLSearchParams(window.location.search);
-        const tableNo = urlParams.get('table') || '미지정';
+        const initialTable = urlParams.get('table') || '';
+        document.getElementById('table-input').value = initialTable;
 
         function switchCategory(category) {
             document.getElementById('tab-coffee').classList.toggle('active', category === 'coffee');
@@ -306,9 +310,7 @@
 
             document.getElementById('tab-coffee').innerText = i18n[lang].tabCoffee;
             document.getElementById('tab-tea').innerText = i18n[lang].tabTea;
-
-            const displayTable = tableNo === '미지정' ? i18n[lang].tableNone : tableNo;
-            document.getElementById('table-display').innerText = `${i18n[lang].tablePrefix}${displayTable}`;
+            document.getElementById('table-label-text').innerText = i18n[lang].tableLabel;
 
             document.querySelectorAll('.menu-name').forEach(el => {
                 el.innerText = lang === 'kor' ? el.getAttribute('data-kor') : el.getAttribute('data-eng');
@@ -509,7 +511,8 @@
         }
 
         function submitCartOrder() {
-            if (tableNo === '미지정') {
+            const currentTable = document.getElementById('table-input').value.trim();
+            if (!currentTable) {
                 alert(i18n[currentLang].noTableAlert);
                 return;
             }
@@ -542,7 +545,7 @@
                 fullMenuNameForGAS += ` [요청사항: ${memoText}]`;
             }
 
-            if (confirm(i18n[currentLang].confirmOrder(tableNo, summaryText, memoText))) {
+            if (confirm(i18n[currentLang].confirmOrder(currentTable, summaryText, memoText))) {
                 const loadingText = document.getElementById('loading-text');
                 loadingText.style.display = 'block';
 
@@ -551,7 +554,7 @@
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        tableNo: tableNo,
+                        tableNo: currentTable,
                         menu: fullMenuNameForGAS
                     })
                 })
