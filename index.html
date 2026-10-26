@@ -44,7 +44,6 @@
         
         .modal-subtitle { font-size: 13px; font-weight: bold; color: #666; text-align: left; margin: 12px 0 6px 2px; }
 
-        /* 커스텀 성공 모달 전용 스타일 */
         .success-modal-content { background: #fff; width: 90%; max-width: 360px; padding: 24px; border-radius: 14px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .success-modal-title { font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #28a745; }
         .success-modal-body { font-size: 14px; color: #333; line-height: 1.6; margin-bottom: 20px; white-space: pre-line; }
@@ -224,12 +223,12 @@
         </div>
     </div>
 
-    <!-- 🌟 도메인 이름이 안 뜨는 깔끔한 주문 완료 커스텀 모달 -->
+    <!-- 주문 완료 커스텀 모달 (언어별 자동 반영) -->
     <div id="successModal" class="modal">
         <div class="success-modal-content">
-            <div class="success-modal-title">주문 접수 완료</div>
+            <div id="success-modal-title" class="success-modal-title">주문 접수 완료</div>
             <div id="success-modal-body" class="success-modal-body"></div>
-            <button class="success-modal-btn" onclick="closeSuccessModal()">확인</button>
+            <button id="success-modal-btn" class="success-modal-btn" onclick="closeSuccessModal()">확인</button>
         </div>
     </div>
 
@@ -273,8 +272,8 @@
                 noTableAlert: "테이블 번호를 입력해 주세요.",
                 noItemAlert: "장바구니에 담긴 메뉴가 없습니다.",
                 confirmOrder: (table, summary, memo) => `[${table}]번 테이블\n\n${summary}${memo ? '\n\n요청사항: ' + memo : ''}\n\n위 내용으로 주문을 전송하시겠습니까?`,
-                successAlert: "주문이 성공적으로 접수되었습니다!",
-                errorAlert: "주문 전송 중 오류가 발생했습니다.",
+                successTitle: "주문 접수 완료",
+                successBtn: "확인",
                 titleDecaf: "- Decaffeinated Tea -",
                 titleCaffeine: "- Caffeine Tea -"
             },
@@ -298,8 +297,8 @@
                 noTableAlert: "Please enter a table number.",
                 noItemAlert: "Please add items to your cart.",
                 confirmOrder: (table, summary, memo) => `[Table ${table}]\n\n${summary}${memo ? '\n\nRequests: ' + memo : ''}\n\nWould you like to place this order?`,
-                successAlert: "Your order has been successfully placed!",
-                errorAlert: "An error occurred while sending your order.",
+                successTitle: "Order Confirmed",
+                successBtn: "OK",
                 titleDecaf: "- Decaffeinated Tea -",
                 titleCaffeine: "- Caffeine Tea -"
             }
@@ -324,6 +323,10 @@
             document.getElementById('tab-coffee').innerText = i18n[lang].tabCoffee;
             document.getElementById('tab-tea').innerText = i18n[lang].tabTea;
             document.getElementById('table-label-text').innerText = i18n[lang].tableLabel;
+
+            // 모달 타이틀 및 확인 버튼 언어 반영
+            document.getElementById('success-modal-title').innerText = i18n[lang].successTitle;
+            document.getElementById('success-modal-btn').innerText = i18n[lang].successBtn;
 
             document.querySelectorAll('.menu-name').forEach(el => {
                 el.innerText = lang === 'kor' ? el.getAttribute('data-kor') : el.getAttribute('data-eng');
@@ -461,7 +464,6 @@
             document.getElementById('optionModal').style.display = 'none';
         }
 
-        // 커스텀 성공 모달 제어 함수
         function showSuccessModal(message) {
             document.getElementById('success-modal-body').innerText = message;
             document.getElementById('successModal').style.display = 'flex';
@@ -596,7 +598,6 @@
                         ? `Your order has been successfully placed!\n\nPending orders ahead: ${count}\nEstimated waiting time: Approx. ${estMinutes} min(s)`
                         : `주문이 성공적으로 접수되었습니다!\n\n현재 대기 중인 주문: ${count}건\n예상 조리 시간: 약 ${estMinutes}분 소요 예정입니다.`;
 
-                    // 🌟 브라우저 기본 alert 대신 도메인이 안 뜨는 깔끔한 커스텀 모달 호출
                     showSuccessModal(successMsg);
 
                     cart = [];
