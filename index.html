@@ -44,6 +44,13 @@
         
         .modal-subtitle { font-size: 13px; font-weight: bold; color: #666; text-align: left; margin: 12px 0 6px 2px; }
 
+        /* 커스텀 성공 모달 전용 스타일 */
+        .success-modal-content { background: #fff; width: 90%; max-width: 360px; padding: 24px; border-radius: 14px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .success-modal-title { font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #28a745; }
+        .success-modal-body { font-size: 14px; color: #333; line-height: 1.6; margin-bottom: 20px; white-space: pre-line; }
+        .success-modal-btn { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .success-modal-btn:hover { background: #218838; }
+
         .option-buttons { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
         .opt-btn { flex: 1; padding: 12px 0; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; border: 2px solid #ddd; background: #f8f9fa; color: #555; }
         .opt-btn.active { background: #343a40; border-color: #343a40; color: #fff; }
@@ -214,6 +221,15 @@
             </div>
             <button class="btn-add" onclick="addToCart()" data-kor="장바구니 담기" data-eng="Add to Cart">장바구니 담기</button><br>
             <button class="btn-close" onclick="closeOptionModal()" data-kor="취소" data-eng="Cancel">취소</button>
+        </div>
+    </div>
+
+    <!-- 🌟 도메인 이름이 안 뜨는 깔끔한 주문 완료 커스텀 모달 -->
+    <div id="successModal" class="modal">
+        <div class="success-modal-content">
+            <div class="success-modal-title">주문 접수 완료</div>
+            <div id="success-modal-body" class="success-modal-body"></div>
+            <button class="success-modal-btn" onclick="closeSuccessModal()">확인</button>
         </div>
     </div>
 
@@ -445,6 +461,16 @@
             document.getElementById('optionModal').style.display = 'none';
         }
 
+        // 커스텀 성공 모달 제어 함수
+        function showSuccessModal(message) {
+            document.getElementById('success-modal-body').innerText = message;
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
         function addToCart() {
             const beanKor = isCoffeeMenu && selectedBeanOpt === 'DECAF' ? '디카페인' : 'none';
             const cinnamonKor = isCappuccinoMenu ? (selectedCinnamonOpt === 'O' ? '시나몬 O' : 'none') : 'none';
@@ -546,7 +572,6 @@
                 const loadingText = document.getElementById('loading-text');
                 loadingText.style.display = 'block';
 
-                // 1. 주문 전송 (POST)
                 fetch(GAS_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -557,26 +582,22 @@
                     })
                 })
                 .then(() => {
-                    // 2. 주문 전송 완료 직후, 현재 대기 중인 주문 목록을 조회하여 대기 건수 및 예상 시간 산출
                     return fetch(GAS_URL);
                 })
                 .then(response => response.json())
                 .then(orders => {
                     loadingText.style.display = 'none';
 
-                    // [접수대기] 또는 [제조완료] 상태인 주문 필터링
                     const pendingOrders = orders.filter(o => o.status === "접수대기" || o.status === "제조완료");
                     const count = pendingOrders.length;
-                    
-                    // 예상 시간 계산 (기본 3분 + 대기 건당 3분, 최소 3분)
                     const estMinutes = Math.max(3, count * 3);
 
-                    // 2줄 띄우고 대기 건수 및 예상 시간 안내 팝업 출력
                     const successMsg = currentLang === 'eng' 
                         ? `Your order has been successfully placed!\n\nPending orders ahead: ${count}\nEstimated waiting time: Approx. ${estMinutes} min(s)`
                         : `주문이 성공적으로 접수되었습니다!\n\n현재 대기 중인 주문: ${count}건\n예상 조리 시간: 약 ${estMinutes}분 소요 예정입니다.`;
 
-                    alert(successMsg);
+                    // 🌟 브라우저 기본 alert 대신 도메인이 안 뜨는 깔끔한 커스텀 모달 호출
+                    showSuccessModal(successMsg);
 
                     cart = [];
                     document.getElementById('order-memo').value = '';
@@ -584,8 +605,10 @@
                 })
                 .catch(error => {
                     loadingText.style.display = 'none';
-                    // 만약 대기 건수 조회 중 통신 에러가 나더라도 기본 성공 팝업은 띄워줌
-                    alert(i18n[currentLang].successAlert);
+                    const fallbackMsg = currentLang === 'eng'
+                        ? "Your order has been successfully placed!"
+                        : "주문이 성공적으로 접수되었습니다!";
+                    showSuccessModal(fallbackMsg);
                     cart = [];
                     document.getElementById('order-memo').value = '';
                     updateCartUI();
